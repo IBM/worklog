@@ -1,0 +1,10 @@
+click==6.7
+Flask==1.0.2
+Flask-PyMongo==2.1.0
+itsdangerous==0.24
+Jinja2==2.10
+MarkupSafe==1.0
+pycrypto==2.6.1
+pymongo==3.7.1
+simple-crypt==4.1.7
+Werkzeug==0.14.1
