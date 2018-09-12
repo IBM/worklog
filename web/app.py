@@ -255,7 +255,7 @@ def modifyRemote(user="",year=None,remote=None,location=None):
         except:
             return jsonify({"error": "Invalid remote days given"}), 400
         
-        location = location.capitalize()
+        location = location.title()
         
         data = getYearFromDatabase(user, year)
         
@@ -326,7 +326,7 @@ def modifyRemote(user="",year=None,remote=None,location=None):
                                                                     "lastdate" : lastdate,
                                                                     "office" : 0,
                                                                     "remote" : {
-                                                                        "total" : 0,
+                                                                        "total" : remote,
                                                                         "locations" : {
                                                                             location: remote
                                                                         }
@@ -686,5 +686,8 @@ def getYearFromDatabase(user,year):
                 return data
     return None
 
-if __name__ == '__main__':
+def start():
     app.run(debug=True,host='0.0.0.0')
+    
+if __name__ == '__main__':
+    start()
