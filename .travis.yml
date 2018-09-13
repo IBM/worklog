@@ -1,0 +1,29 @@
+---
+dist: trusty
+cache: pip
+sudo: required
+language: python
+python:
+  - "3.6"
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get install shellcheck
+  - sudo pip install yamllint
+  - git clone https://github.com/IBM/pattern-ci
+
+before_script:
+  - "./pattern-ci/tests/shellcheck-lint.sh"
+  - "./pattern-ci/tests/yaml-lint.sh"
+
+jobs:
+  include:
+    - script: ./tests/docker-compose.sh
+    - services:
+        - mongodb
+        - docker
+      script: ./tests/local-py.sh
+# - install: ./pattern-ci/scripts/install-minikube.sh
+#   script: echo "Insert a test script that would use yaml files"
