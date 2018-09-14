@@ -151,11 +151,13 @@ def modifyOffice(user="",year=None,office=None):
         except:
             return jsonify({"error": "Invalid office days given"}), 400
         
-        data = getYearFromDatabase(user, year)
+        data = request.get_json()
+        
+        userData = getYearFromDatabase(user, year)
         
         if request.method == "POST":
-            if data:
-                if office < 0 or data["office"] + office > (data["lastdate"] - data["startdate"]).days:
+            if userData:
+                if office < 0 or userData["office"] + office > (userData["lastdate"] - userData["startdate"]).days:
                     return jsonify({"error": "Invalid office days given"}), 400
                 
                 lastdate = datetime.datetime.utcnow()
@@ -167,7 +169,7 @@ def modifyOffice(user="",year=None,office=None):
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
                 mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.office":data["office"]+office,"years.$.lastdate":lastdate}},
+                                           {"$set": {"years.$.office":userData["office"]+office,"years.$.lastdate":lastdate}},
                                            upsert=True)
                 
                 return getOffice(user, year)
@@ -206,15 +208,55 @@ def modifyOffice(user="",year=None,office=None):
                 return getOffice(user, year)
         
         if request.method == "PUT":
-            if data:
-                if office >= data["office"] or office < 0:
+            if userData:
+                if office > userData["office"] or office < 0:
                     return jsonify({"error": "Invalid office days given"}), 400
                 
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
+                
+                if data:
+                    startdate = None
+                    lastdate = None
+                    if "lastdate" in data:
+                        try:
+                            lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
                     
-                mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.office":office}},
-                                           upsert=True)
+                    if "startdate" in data:
+                        try:
+                            startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                        
+                        if lastdate:
+                            if (lastdate - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        else:
+                            if (userData["lastdate"] - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        
+                    if startdate and lastdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.office":office,
+                                                             "years.$.startdate":startdate,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                    elif startdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.office":office,
+                                                             "years.$.startdate":startdate}},
+                                                   upsert=True)
+                    else:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.office":office,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                
+                else:
+                    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                               {"$set": {"years.$.office":office}},
+                                               upsert=True)
                 
                 return getOffice(user, year)
             
@@ -257,12 +299,14 @@ def modifyRemote(user="",year=None,remote=None,location=None):
         
         location = location.title()
         
-        data = getYearFromDatabase(user, year)
+        data = request.get_json()
+        
+        userData = getYearFromDatabase(user, year)
         
         if request.method == "POST":
-            if data:
-                if location in data["remote"]["locations"]:
-                    if remote < 0 or data["remote"]["locations"][location] + remote > (data["lastdate"] - data["startdate"]).days:
+            if userData:
+                if location in userData["remote"]["locations"]:
+                    if remote < 0 or userData["remote"]["locations"][location] + remote > (userData["lastdate"] - userData["startdate"]).days:
                         return jsonify({"error": "Invalid remote days given"}), 400
                     
                     lastdate = datetime.datetime.utcnow()
@@ -274,8 +318,8 @@ def modifyRemote(user="",year=None,remote=None,location=None):
                     userCred = mongoCredentials.db.credentials.find_one({"username": user})
                         
                     mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                               {"$set": {"years.$.remote.total":data["remote"]["total"]+remote,
-                                                        "years.$.remote.locations."+location:data["remote"]["locations"][location]+remote,
+                                               {"$set": {"years.$.remote.total":userData["remote"]["total"]+remote,
+                                                        "years.$.remote.locations."+location:userData["remote"]["locations"][location]+remote,
                                                         "years.$.lastdate":lastdate}},
                                                upsert=True)
                     
@@ -291,14 +335,14 @@ def modifyRemote(user="",year=None,remote=None,location=None):
                     elif year > lastdate.year:
                         lastdate = startdate
                         
-                    locations = data["remote"]["locations"]
+                    locations = userData["remote"]["locations"]
 
                     locations[location] = remote
                     
                     userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
                     mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                               {"$set": {"years.$.remote.total":data["remote"]["total"]+remote,
+                                               {"$set": {"years.$.remote.total":userData["remote"]["total"]+remote,
                                                         "years.$.remote.locations": locations}},
                                                upsert=True)
                     
@@ -340,16 +384,58 @@ def modifyRemote(user="",year=None,remote=None,location=None):
                 return getRemote(user, year)
         
         if request.method == "PUT":
-            if data:
-                if remote >= data["remote"]["locations"][location] or remote < 0:
+            if userData:
+                if remote > userData["remote"]["locations"][location] or remote < 0:
                     return jsonify({"error": "Invalid remote days given"}), 400
                 
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
+                
+                if data:
+                    startdate = None
+                    lastdate = None
+                    if "lastdate" in data:
+                        try:
+                            lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
                     
-                mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.remote.total":data["remote"]["total"]-data["remote"]["locations"][location]+remote,
-                                                    "years.$.remote.locations."+location:remote}},
-                                           upsert=True)
+                    if "startdate" in data:
+                        try:
+                            startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                        
+                        if lastdate:
+                            if (lastdate - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        else:
+                            if (userData["lastdate"] - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        
+                    if startdate and lastdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.remote.total":userData["remote"]["total"]-userData["remote"]["locations"][location]+remote,
+                                                             "years.$.remote.locations."+location:remote,
+                                                             "years.$.startdate":startdate,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                    elif startdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.remote.total":userData["remote"]["total"]-userData["remote"]["locations"][location]+remote,
+                                                             "years.$.remote.locations."+location:remote,
+                                                             "years.$.startdate":startdate}},
+                                                   upsert=True)
+                    else:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.remote.total":userData["remote"]["total"]-userData["remote"]["locations"][location]+remote,
+                                                             "years.$.remote.locations."+location:remote,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                else:
+                    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                               {"$set": {"years.$.remote.total":userData["remote"]["total"]-userData["remote"]["locations"][location]+remote,
+                                                         "years.$.remote.locations."+location:remote}},
+                                               upsert=True)
                 
                 return getRemote(user, year)
             
@@ -390,11 +476,13 @@ def modifyVacation(user="",year=None,vacation=None):
         except:
             return jsonify({"error": "Invalid vacation days given"}), 400
         
-        data = getYearFromDatabase(user, year)
+        data = request.get_json()
+        
+        userData = getYearFromDatabase(user, year)
         
         if request.method == "POST":
-            if data:
-                if vacation < 0 or data["vacation"] + vacation > (data["lastdate"] - data["startdate"]).days:
+            if userData:
+                if vacation < 0 or userData["vacation"] + vacation > (userData["lastdate"] - userData["startdate"]).days:
                     return jsonify({"error": "Invalid vacation days given"}), 400
                 
                 lastdate = datetime.datetime.utcnow()
@@ -406,7 +494,7 @@ def modifyVacation(user="",year=None,vacation=None):
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
                 mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.vacation":data["vacation"]+vacation,
+                                           {"$set": {"years.$.vacation":userData["vacation"]+vacation,
                                                      "years.$.lastdate":lastdate}},
                                            upsert=True)
                 
@@ -446,15 +534,55 @@ def modifyVacation(user="",year=None,vacation=None):
                 return getVacation(user, year)
         
         if request.method == "PUT":
-            if data:
-                if vacation >= data["vacation"] or vacation < 0:
+            if userData:
+                if vacation > userData["vacation"] or vacation < 0:
                     return jsonify({"error": "Invalid vacation days given"}), 400
                 
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
+                  
+                if data:
+                    startdate = None
+                    lastdate = None
+                    if "lastdate" in data:
+                        try:
+                            lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
                     
-                mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.vacation":vacation}},
-                                           upsert=True)
+                    if "startdate" in data:
+                        try:
+                            startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                        
+                        if lastdate:
+                            if (lastdate - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        else:
+                            if (userData["lastdate"] - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        
+                    if startdate and lastdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.vacation":vacation,
+                                                             "years.$.startdate":startdate,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                    elif startdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.vacation":vacation,
+                                                             "years.$.startdate":startdate}},
+                                                   upsert=True)
+                    else:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.vacation":vacation,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                
+                else:  
+                    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                             {"$set": {"years.$.vacation":vacation}},
+                                             upsert=True)
                 
                 return getVacation(user, year)
             
@@ -495,11 +623,13 @@ def modifyHolidays(user="",year=None,holidays=None):
         except:
             return jsonify({"error": "Invalid holidays given"}), 400
         
-        data = getYearFromDatabase(user, year)
+        data = request.get_json()
+        
+        userData = getYearFromDatabase(user, year)
         
         if request.method == "POST":
-            if data:
-                if holidays < 0 or data["holidays"] + holidays > (data["lastdate"] - data["startdate"]).days:
+            if userData:
+                if holidays < 0 or userData["holidays"] + holidays > (userData["lastdate"] - userData["startdate"]).days:
                     return jsonify({"error": "Invalid holidays given"}), 400
                 
                 lastdate = datetime.datetime.utcnow()
@@ -511,7 +641,7 @@ def modifyHolidays(user="",year=None,holidays=None):
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
                 mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.holidays":data["holidays"]+holidays,
+                                           {"$set": {"years.$.holidays":userData["holidays"]+holidays,
                                                      "years.$.lastdate":lastdate}},
                                            upsert=True)
                 
@@ -551,15 +681,55 @@ def modifyHolidays(user="",year=None,holidays=None):
                 return getHolidays(user, year)
         
         if request.method == "PUT":
-            if data:
-                if holidays >= data["holidays"] or holidays < 0:
+            if userData:
+                if holidays > userData["holidays"] or holidays < 0:
                     return jsonify({"error": "Invalid holidays given"}), 400
                 
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
-                mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.holidays":holidays}},
-                                           upsert=True)
+                if data:
+                    startdate = None
+                    lastdate = None
+                    if "lastdate" in data:
+                        try:
+                            lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                    
+                    if "startdate" in data:
+                        try:
+                            startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                        
+                        if lastdate:
+                            if (lastdate - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        else:
+                            if (userData["lastdate"] - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        
+                    if startdate and lastdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.holidays":holidays,
+                                                             "years.$.startdate":startdate,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                    elif startdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.holidays":holidays,
+                                                             "years.$.startdate":startdate}},
+                                                   upsert=True)
+                    else:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.holidays":holidays,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                
+                else:
+                    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                               {"$set": {"years.$.holidays":holidays}},
+                                               upsert=True)
                 
                 return getHolidays(user, year)
             
@@ -599,11 +769,13 @@ def modifySick(user="",year=None,sick=None):
         except:
             return jsonify({"error": "Invalid sick days given"}), 400
         
-        data = getYearFromDatabase(user, year)
+        data = request.get_json()
+        
+        userData = getYearFromDatabase(user, year)
         
         if request.method == "POST":
-            if data:
-                if sick < 0 or data["sick"] + sick > (data["lastdate"] - data["startdate"]).days:
+            if userData:
+                if sick < 0 or userData["sick"] + sick > (userData["lastdate"] - userData["startdate"]).days:
                     return jsonify({"error": "Invalid sick days given"}), 400
                 
                 lastdate = datetime.datetime.utcnow()
@@ -615,7 +787,7 @@ def modifySick(user="",year=None,sick=None):
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
                     
                 mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.sick":data["sick"]+sick,
+                                           {"$set": {"years.$.sick":userData["sick"]+sick,
                                                      "years.$.lastdate":lastdate}},
                                            upsert=True)
                 
@@ -655,15 +827,55 @@ def modifySick(user="",year=None,sick=None):
                 return getSick(user, year)
         
         if request.method == "PUT":
-            if data:
-                if sick >= data["sick"] or sick < 0:
+            if userData:
+                if sick > userData["sick"] or sick < 0:
                     return jsonify({"error": "Invalid sick days given"}), 400
                 
                 userCred = mongoCredentials.db.credentials.find_one({"username": user})
+                
+                if data:
+                    startdate = None
+                    lastdate = None
+                    if "lastdate" in data:
+                        try:
+                            lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
                     
-                mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                           {"$set": {"years.$.sick":sick}},
-                                           upsert=True)
+                    if "startdate" in data:
+                        try:
+                            startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
+                        except:
+                            return jsonify({"error": "Invalid dates given"}), 400
+                        
+                        if lastdate:
+                            if (lastdate - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        else:
+                            if (userData["lastdate"] - startdate).days < 0:
+                                return jsonify({"error": "Invalid dates given"}), 400
+                        
+                    if startdate and lastdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.sick":sick,
+                                                             "years.$.startdate":startdate,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                    elif startdate:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.sick":sick,
+                                                             "years.$.startdate":startdate}},
+                                                   upsert=True)
+                    else:
+                        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                                   {"$set": {"years.$.sick":sick,
+                                                             "years.$.lastdate":lastdate}},
+                                                   upsert=True)
+                
+                else:
+                    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                               {"$set": {"years.$.sick":sick}},
+                                               upsert=True)
                 
                 return getSick(user, year)
             

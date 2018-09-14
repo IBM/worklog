@@ -211,7 +211,9 @@ class TestScenarios(unittest.TestCase):
         '''Reset Office'''
         
         '''Reset Test Data'''
-        response = self.app.put('http://localhost:5000/user/test/year/2017/office/1')
+        response = self.app.put('http://localhost:5000/user/test/year/2017/office/1',
+                                data=json.dumps({"startdate": {"month":2,"day":1}}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['office'],1)
         
@@ -286,7 +288,9 @@ class TestScenarios(unittest.TestCase):
         '''Reset Remote'''
         
         '''Reset Test Data'''
-        response = self.app.put('http://localhost:5000/user/test/year/2017/remote/location/New York/1')
+        response = self.app.put('http://localhost:5000/user/test/year/2017/remote/location/New York/1',
+                                data=json.dumps({"startdate": {"month":2,"day":1}}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['remote']['locations']['New York'],1)
         
@@ -361,7 +365,9 @@ class TestScenarios(unittest.TestCase):
         '''Reset Vacation'''
         
         '''Reset Test Data'''
-        response = self.app.put('http://localhost:5000/user/test/year/2017/vacation/1')
+        response = self.app.put('http://localhost:5000/user/test/year/2017/vacation/1',
+                                data=json.dumps({"startdate": {"month":2,"day":1}}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['vacation'],1)
         
@@ -436,7 +442,9 @@ class TestScenarios(unittest.TestCase):
         '''Reset Holidays'''
         
         '''Reset Test Data'''
-        response = self.app.put('http://localhost:5000/user/test/year/2017/holidays/1')
+        response = self.app.put('http://localhost:5000/user/test/year/2017/holidays/1',
+                                data=json.dumps({"startdate": {"month":2,"day":1}}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['holidays'],1)
         
@@ -511,7 +519,9 @@ class TestScenarios(unittest.TestCase):
         '''Reset Sick'''
         
         '''Reset Test Data'''
-        response = self.app.put('http://localhost:5000/user/test/year/2017/sick/1')
+        response = self.app.put('http://localhost:5000/user/test/year/2017/sick/1',
+                                data=json.dumps({"startdate": {"month":2,"day":1}}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['sick'],1)
         

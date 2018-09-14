@@ -261,14 +261,18 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/office/<office> -X PUT
+curl http://localhost:5000/user/<user>/year/<year>/office/<office> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
 
 Year = Year to reset.
 
-Office = Number of days to be reset to for working in the office for a given year.
+Office = Number of days to be reset to for working in the office for a given year. To just modify dates while keeping the office total the same, have Office be the same as the already existing office total. 
+
+Startdate = OPTIONAL month and day to reset start date for the given year.
+
+Lastdate = OPTIONAL month and day to reset last date for the given year.
 
 __Response__
 
@@ -279,6 +283,8 @@ No Year Found: When there is no document for the year specified, the response is
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Invalid Office Total: When the office variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing office total, the response is a 400 status code. The response body is a JSON object containing an error.
+
+Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -352,7 +358,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/remote/location/<location>/<remote> -X PUT
+curl http://localhost:5000/user/<user>/year/<year>/remote/location/<location>/<remote> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
@@ -361,7 +367,11 @@ Year = Year to reset.
 
 Location = Remote location worked to reset.
 
-Remote = Number of days to be reset to for working remotely for a given year and location.
+Remote = Number of days to be reset to for working remotely for a given year and location. To just modify dates while keeping the remote total the same, have Remote be the same as the already existing remote total. 
+
+Startdate = OPTIONAL month and day to reset start date for the given year.
+
+Lastdate = OPTIONAL month and day to reset last date for the given year.
 
 __Response__
 
@@ -372,6 +382,8 @@ No Year Found: When there is no document for the year specified, the response is
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Invalid Office Total: When the remote variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing remote total, the response is a 400 status code. The response body is a JSON object containing an error.
+
+Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -438,14 +450,18 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/vacation/<vacation> -X PUT
+curl http://localhost:5000/user/<user>/year/<year>/vacation/<vacation> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
 
 Year = Year to reset.
 
-Vacation = Number of days to be reset to for vacation for a given year.
+Vacation = Number of days to be reset to for vacation for a given year. To just modify dates while keeping the vacation total the same, have Vacation be the same as the already existing vacation total. 
+
+Startdate = OPTIONAL month and day to reset start date for the given year.
+
+Lastdate = OPTIONAL month and day to reset last date for the given year.
 
 __Response__
 
@@ -456,6 +472,8 @@ No Year Found: When there is no document for the year specified, the response is
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Invalid Office Total: When the vacation variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
+
+Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -522,14 +540,18 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/holidays/<holidays> -X PUT
+curl http://localhost:5000/user/<user>/year/<year>/holidays/<holidays> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
 
 Year = Year to reset.
 
-Holidays = Number of days to be reset to for holidays for a given year.
+Holidays = Number of days to be reset to for holidays for a given year. To just modify dates while keeping the holidays total the same, have Holidays be the same as the already existing holidays total. 
+
+Startdate = OPTIONAL month and day to reset start date for the given year.
+
+Lastdate = OPTIONAL month and day to reset last date for the given year.
 
 __Response__
 
@@ -540,6 +562,8 @@ No Year Found: When there is no document for the year specified, the response is
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Invalid Office Total: When the holidays variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
+
+Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -606,14 +630,18 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/sick/<sick> -X PUT
+curl http://localhost:5000/user/<user>/year/<year>/sick/<sick> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
 
 Year = Year to reset.
 
-Sick = Number of days to be reset to for sick days for a given year.
+Sick = Number of days to be reset to for sick days for a given year. To just modify dates while keeping the sick total the same, have Sick be the same as the already existing sick total. 
+
+Startdate = OPTIONAL month and day to reset start date for the given year.
+
+Lastdate = OPTIONAL month and day to reset last date for the given year.
 
 __Response__
 
@@ -624,5 +652,7 @@ No Year Found: When there is no document for the year specified, the response is
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Invalid Sick Days Total: When the sick variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
+
+Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
