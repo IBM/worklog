@@ -1,3 +1,4 @@
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -11,10 +12,10 @@ spec:
         version: v1
     spec:
       containers:
-      - name: worklog
-        image: maxshapiro32/worklog
-        ports:
-          - containerPort: 5000
+        - name: worklog
+          image: maxshapiro32/worklog
+          ports:
+            - containerPort: 5000
 ---
 apiVersion: v1
 kind: Service

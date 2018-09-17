@@ -1,9 +1,8 @@
-FROM ubuntu:latest
+FROM python:3.7-alpine
 MAINTAINER Max Shapiro "maxshapiro32@ibm.com"
-RUN apt-get update -y
-RUN apt-get install -y python3-pip python-dev build-essential
+RUN apk add gcc g++ make libffi-dev openssl-dev
 COPY . /app
 WORKDIR /app
-RUN pip3 install -r requirements.txt
-ENTRYPOINT ["python3"]
+RUN pip install -r requirements.txt
+ENTRYPOINT ["python"]
 CMD ["app.py"]
