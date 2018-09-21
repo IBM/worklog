@@ -58,7 +58,7 @@ This application supports multiple users. Each user is a document in the databas
 
 ## Login
 
-Users must login in order to view and modify thir own respective work log. Once a user is logged in, they have a 20 minute session before being logged out.
+Users must login in order to view and modify there own respective work log. Once a user is logged in, they have a 20 minute session before being logged out.
 
 __Command__
 
@@ -105,7 +105,7 @@ Users have the ability to reset their password.
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/password/reset -H "Content-Type: application/json" -X PUT -d '{"new_password": <newpassword>, "password": <password>}'
+curl http://localhost:5000/user/<user>/reset -H "Content-Type: application/json" -X PUT -d '{"new_password": <newpassword>, "password": <password>}'
 ```
 
 User = Username for user.
@@ -147,7 +147,7 @@ Each year is a document in a years list located in each user's unique document i
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>
+curl http://localhost:5000/user/<user>?year=<year>
 ```
 
 User = Username for user.
@@ -181,7 +181,7 @@ The total for each year refers to the total number of days worked during a calen
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/total
+curl http://localhost:5000/user/<user>?year=<year>&type=total
 ```
 
 User = Username for user.
@@ -215,7 +215,7 @@ The office for each year refers to the number of days worked in the office durin
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/office
+curl http://localhost:5000/user/<user>?year=<year>&type=office
 ```
 
 User = Username for user.
@@ -237,7 +237,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/office/<office> -X POST
+curl http://localhost:5000/user/<user>?year=<year>&type=office&days=<office> -X POST
 ```
 
 User = Username for user.
@@ -261,7 +261,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/office/<office> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/user/<user>?year=<year>&type=office&days=<office> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
@@ -310,7 +310,7 @@ The remote for each year refers to the number of days worked remotely during a c
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/remote
+curl http://localhost:5000/user/<user>?year=<year>&type=remote
 ```
 
 User = Username for user.
@@ -332,7 +332,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/remote/location/<location>/<remote> -X POST
+curl http://localhost:5000/user/<user>?year=<year>&type=remote&location=<location>&days=<remote> -X POST
 ```
 
 User = Username for user.
@@ -358,7 +358,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/remote/location/<location>/<remote> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/user/<user>?year=<year>&type=remote&location=<location>&days=<remote> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
@@ -404,7 +404,7 @@ The vacation for each year refers to the number of vacation days used during a c
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/vacation
+curl http://localhost:5000/user/<user>?year=<year>&type=vacation
 ```
 
 User = Username for user.
@@ -426,7 +426,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/vacation/<vacation> -X POST
+curl http://localhost:5000/user/<user>?year=<year>&type=vacation&days=<vacation> -X POST
 ```
 
 User = Username for user.
@@ -450,7 +450,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/vacation/<vacation> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/user/<user>?year=<year>&type=vacation&days=<vacation> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
@@ -494,7 +494,7 @@ The holidays for each year refers to the number of holidays used during a calend
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/holidays
+curl http://localhost:5000/user/<user>?year=<year>&type=holidays
 ```
 
 User = Username for user.
@@ -516,7 +516,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/holidays/<holidays> -X POST
+curl http://localhost:5000/user/<user>?year=<year>&type=holidays&days=<holidays> -X POST
 ```
 
 User = Username for user.
@@ -540,7 +540,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/holidays/<holidays> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/user/<user>?year=<year>&type=holidays&days=<holidays> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
@@ -584,7 +584,7 @@ The sick for each year refers to the number of sick days used during a calendar 
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/sick
+curl http://localhost:5000/user/<user>?year=<year>&type=sick
 ```
 
 User = Username for user.
@@ -606,7 +606,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/sick/<sick> -X POST
+curl http://localhost:5000/user/<user>?year=<year>&type=sick&days=<sick> -X POST
 ```
 
 User = Username for user.
@@ -630,7 +630,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/user/<user>/year/<year>/sick/<sick> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/user/<user>?year=<year>&type=sick&days=<sick> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
 ```
 
 User = Username for user.
