@@ -3,8 +3,6 @@ import {NavLink} from "react-router-dom";
 
 class Welcome extends React.Component {
 
-
-
 	render() {
 		return (
 			<div>
