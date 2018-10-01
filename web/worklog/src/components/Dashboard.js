@@ -1,5 +1,6 @@
 import React from "react";
 import {Doughnut} from "react-chartjs-2";
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 
 
 function getRandomColor(length) {
@@ -33,6 +34,7 @@ class Dashboard extends React.Component {
 			addError: false,
 			editError: false,
 			clicked: "Office",
+			modal: false,
 			charData:{
 				datasets: [{
     				data: [1,1,1,1,1],
@@ -51,6 +53,7 @@ class Dashboard extends React.Component {
 		this.getData();
 
 		this.handleChange = this.handleChange.bind(this);
+		this.toggle = this.toggle.bind(this);
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -231,6 +234,8 @@ class Dashboard extends React.Component {
   		this.setState({editDayType: dayType,
   						editDayValue: dayValue,
   						isEditRemote: isRemote});
+
+  		this.toggle();
   	}
 
   	next = (e) => {
@@ -324,15 +329,22 @@ class Dashboard extends React.Component {
   							isAddRemote: false});
   		}
   	}
+
+  	toggle() {
+    	this.setState({
+      		modal: !this.state.modal
+    	});
+  	} 
+
 	
 	render() {
 		if (this.state.data) {
 			return (
 				<div>
 					<h1>Dashboard</h1>
-					<button onClick={this.logout} >Logout</button><br/>
-					<button disabled={this.state.currentIndex === 0} onClick={this.previous} >&laquo; Previous</button>
-					<button disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} >Next &raquo;</button>
+					<Button color="danger" onClick={this.logout} >Logout</Button><br/>
+					<Button color="info" disabled={this.state.currentIndex === 0} onClick={this.previous} >&laquo; Previous</Button>
+					<Button color="info" disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} >Next &raquo;</Button>
 					<br/>
 					<h4>{this.state.data[this.state.currentIndex].startdate} - {this.state.data[this.state.currentIndex].lastdate}</h4>
 					<Doughnut data={this.state.charData} onElementsClick={this.clickChart} />
@@ -343,7 +355,7 @@ class Dashboard extends React.Component {
 						</div>
 						) : ''
 					}
-					<button onClick={this.exportData} >Export Data</button><br/><br/>
+					<Button color="primary" onClick={this.exportData} >Export Data</Button><br/><br/>
 					<form method="post" onSubmit={this.addDays}>
 						Add Days<br/>
 						<select value={this.state.addDayType} onChange={this.handleChange}>
@@ -362,21 +374,25 @@ class Dashboard extends React.Component {
 						<input type="submit" value="Add"/><br/>
 						{this.state.addError ? 'Invalid Parameters':''}
 					</form><br/><br/>
-					<form method="post" onSubmit={this.editDays}>
-						Edit {this.state.editDayType.charAt(0).toUpperCase() + this.state.editDayType.slice(1)} Days<br/>
-						Start Date ({this.state.data[this.state.currentIndex].year}):<br/>
-						Month: <input type="number" min="1" max="12" ref="startDateMonth"/>
-						Day: <input type="number" min="1" max="31" ref="startDateDay"/><br/>
-						Last Date ({this.state.data[this.state.currentIndex].year}):<br/>
-						Month: <input type="number" min="1" max="12" ref="lastDateMonth"/>
-						Day: <input type="number" min="1" max="31" ref="lastDateDay"/><br/>
-						# of Days:<br/>
-						<input type="number" min="0" max={this.state.editDayValue} ref="editDays"/><br/>
-						Location:<br/>
-						<input type="text" ref="editLocation" disabled={!this.state.isEditRemote}/>
-						<input type="submit" value="Update"/><br/>
-						{this.state.editError ? 'Invalid Parameters':''}
-					</form>
+					<Modal isOpen={this.state.modal} toggle={this.toggle}>
+						<ModalBody>
+							<form method="post" onSubmit={this.editDays}>
+								Edit {this.state.editDayType.charAt(0).toUpperCase() + this.state.editDayType.slice(1)} Days<br/>
+								Start Date ({this.state.data[this.state.currentIndex].year}):<br/>
+								Month: <input type="number" min="1" max="12" ref="startDateMonth"/>
+								Day: <input type="number" min="1" max="31" ref="startDateDay"/><br/>
+								Last Date ({this.state.data[this.state.currentIndex].year}):<br/>
+								Month: <input type="number" min="1" max="12" ref="lastDateMonth"/>
+								Day: <input type="number" min="1" max="31" ref="lastDateDay"/><br/>
+								# of Days:<br/>
+								<input type="number" min="0" max={this.state.editDayValue} ref="editDays"/><br/>
+								Location:<br/>
+								<input type="text" ref="editLocation" disabled={!this.state.isEditRemote}/>
+								<input type="submit" value="Update"/><br/>
+								{this.state.editError ? 'Invalid Parameters':''}
+							</form>
+						</ModalBody>
+					</Modal>
 				</div>
 			);
 		} else {

@@ -1,11 +1,20 @@
 import React from "react";
+import {Button, Form, FormGroup, FormFeedback, Label, Input} from "reactstrap";
 
 class Reset extends React.Component {
+
+	constructor(props) {
+    	super(props);
+
+    	this.state = {username: '',
+    					password: '',
+    					newPassword: ''};
+	}
 
 	submit = (e) => {
 		if(e) e.preventDefault();
 
-		this.props.reset(e,this.refs.username.value,this.refs.password.value,this.refs.newPassword.value);
+		this.props.reset(e,this.state.username,this.state.password,this.state.newPassword);
 
 	}
 
@@ -13,17 +22,23 @@ class Reset extends React.Component {
 		return (
 			<div>
 				<h1>Reset Password</h1>
-				<form method="post" onSubmit={this.submit}>
-					Username:<br/>
-					<input type="text" ref="username"/><br/><br/>
-					Password:<br/>
-					<input type="password" ref="password"/><br/><br/>
-					New Password:<br/>
-					<input type="password" ref="newPassword"/><br/><br/>
-					<button onClick={this.props.redirectToLogin} >Cancel</button>
-					<input type="submit" value="Reset"/>
-				</form>
-				{this.props.state.invalidReset ? "Invalid Credentials" : ""}
+				<Form method="post" onSubmit={this.submit}>
+					<FormGroup>
+						<Label>Username:</Label>
+						<Input invalid={this.props.state.invalidReset} type="text" value={this.state.username} onChange={e => this.setState({username: e.target.value})}/>
+					</FormGroup>
+					<FormGroup>
+						<Label>Password:</Label>
+						<Input invalid={this.props.state.invalidReset} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
+					</FormGroup>
+					<FormGroup>
+						<Label>New Password:</Label>
+						<Input invalid={this.props.state.invalidReset} type="password" value={this.state.newPassword} onChange={e => this.setState({newPassword: e.target.value})}/>
+						<FormFeedback>Invalid credentials</FormFeedback>
+					</FormGroup>
+					<Button onClick={this.props.redirectToLogin} color="danger" >Cancel</Button>
+					<Button type="submit" color="primary">Reset</Button>
+				</Form>
 			</div>
 		);
 	}
