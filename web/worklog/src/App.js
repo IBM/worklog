@@ -18,7 +18,9 @@ class App extends React.Component {
 
     this.state = {
       session: false,
-      user: undefined
+      user: undefined,
+      invalidLogin: false,
+      invalidReset: false
     };
     this.login = this.login.bind(this);
     this.create = this.create.bind(this);
@@ -27,14 +29,13 @@ class App extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log(this.state);
-
     if (this.state.session) {
       this.history.push("/dashboard");
     }
   }
 
   redirectToLogin = (e) => {
+    this.setState({session: false, invalidLogin: false, invalidReset: false});
     this.history.push("/login");
   }
 
@@ -49,8 +50,14 @@ class App extends React.Component {
       body: JSON.stringify({username:username,
                 password:password})
     });
+
     const isLoggedIn = await response.ok;
-    this.setState({session:isLoggedIn, user:username});
+
+    if (isLoggedIn) {
+      this.setState({session: true, user: username, invalidLogin: false});
+    } else {
+      this.setState({session: false, invalidLogin: true});
+    }
   }
 
   create = async (e,username,password) => {
@@ -81,7 +88,10 @@ class App extends React.Component {
     });
     const isReset = await response.ok;
     if (isReset) {
+      this.setState({invalidReset: false});
       this.redirectToLogin();
+    } else {
+      this.setState({invalidReset: true});
     }
   }
 
@@ -90,8 +100,8 @@ class App extends React.Component {
         <Router history={this.history}>
           <Switch>
             <Route exact path="/" component={Welcome} />
-            <Route path="/login" render={(props) => <Login {...props} login={this.login} />} />
-            <Route path="/reset" render={(props) => <Reset {...props} reset={this.reset} />} />
+            <Route path="/login" render={(props) => <Login {...props} login={this.login} state={this.state} />} />
+            <Route path="/reset" render={(props) => <Reset {...props} reset={this.reset} state={this.state} redirectToLogin={this.redirectToLogin} />} />
             <Route path="/create" render={(props) => <Create {...props} create={this.create} />} />
             <Route path="/dashboard" render={(props) => <Dashboard {...props} state={this.state} redirectToLogin={this.redirectToLogin} />} />
             <Route component={Error} />

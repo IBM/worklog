@@ -1,5 +1,5 @@
 import React from "react";
-import {Doughnut} from "react-chartjs-2"
+import {Doughnut} from "react-chartjs-2";
 
 
 function getRandomColor(length) {
@@ -24,11 +24,14 @@ class Dashboard extends React.Component {
 		}
 
 		this.state = {
+			session: this.props.state.session,
 			addDayType: "office",
 			editDayType: "office",
 			editDayValue: 0,
 			isAddRemote: false,
 			isEditRemote: false,
+			addError: false,
+			editError: false,
 			clicked: "Office",
 			charData:{
 				datasets: [{
@@ -51,7 +54,9 @@ class Dashboard extends React.Component {
 	}
 
 	componentDidUpdate(prevProps, prevState) {
-	    console.log(this.state);
+	    if (!this.state.session) {
+	    	this.props.redirectToLogin();
+	    }
   	}
 
 	getData = async (e) => {
@@ -59,43 +64,71 @@ class Dashboard extends React.Component {
 
 	    const response = await fetch('http://169.55.81.216:32000/api/v1/user/'+this.props.state.user);
 	    const data = await response.json();
-	    data.sort(function(a,b){
-	    	return a.year > b.year;
-	    })
+	    if ("error" in data) {
+	    	this.setState({session: false});
+	    } else {
+		    data.sort(function(a,b){
+		    	return a.year > b.year;
+		    })
 
-	    var remoteData = [];
-	    var remoteLabels = [];
+		    var remoteData = [];
+		    var remoteLabels = [];
 
-	    for (var location in data[data.length-1].remote.locations) {
+		    for (var location in data[data.length-1].remote.locations) {
 
-   			if ( ! data[data.length-1].remote.locations.hasOwnProperty(location)) {
-      			continue;
-   			}
+	   			if ( ! data[data.length-1].remote.locations.hasOwnProperty(location)) {
+	      			continue;
+	   			}
 
-   			remoteLabels.push(location);
-   			remoteData.push(data[data.length-1].remote.locations[location]);
+	   			remoteLabels.push(location);
+	   			remoteData.push(data[data.length-1].remote.locations[location]);
+			}
+
+		    this.setState({currentIndex: data.length-1, 
+		    				data: data,
+		    				charData:{
+								datasets: [{
+				    				data: [data[data.length-1].office,
+		    								data[data.length-1].remote.total,
+		    								data[data.length-1].vacation,
+		    								data[data.length-1].holidays,
+		    								data[data.length-1].sick],
+				    				backgroundColor: this.state.charData.datasets[0].backgroundColor
+				    				}],
+				    			labels: this.state.charData.labels
+				    		},
+				    		remoteCharData:{
+								datasets: [{
+				    				data: remoteData,
+				    				backgroundColor: getRandomColor(remoteData.length)
+				    				}],
+				    			labels: remoteLabels
+				    		}})
 		}
+  	}
 
-	    this.setState({currentIndex: data.length-1, 
-	    				data: data,
-	    				charData:{
-							datasets: [{
-			    				data: [data[data.length-1].office,
-	    								data[data.length-1].remote.total,
-	    								data[data.length-1].vacation,
-	    								data[data.length-1].holidays,
-	    								data[data.length-1].sick],
-			    				backgroundColor: this.state.charData.datasets[0].backgroundColor
-			    				}],
-			    			labels: this.state.charData.labels
-			    		},
-			    		remoteCharData:{
-							datasets: [{
-			    				data: remoteData,
-			    				backgroundColor: getRandomColor(remoteData.length)
-			    				}],
-			    			labels: remoteLabels
-			    		}})
+  	exportData = (e) => {
+  		if(e) e.preventDefault();
+
+  		var allData = ["Year,Office,Remote,Vacation,Holidays,Sick"];
+
+	    {this.state.data.map(function(year,i){
+	    	allData.push([year.year,year.office,year.remote.total,year.vacation,year.holidays,year.sick].join(","));
+	    })}
+
+	    var csvFile = new Blob([allData.join("\n")], {type: "text/csv"});
+
+	    var downloadLink = document.createElement("a");
+
+	    downloadLink.download = "worklog.csv";
+
+	    downloadLink.href = window.URL.createObjectURL(csvFile);
+
+	    downloadLink.style.display = "none";
+
+	    document.body.appendChild(downloadLink);
+
+	    downloadLink.click();
   	}
 
   	addDays = async (e) => {
@@ -104,21 +137,31 @@ class Dashboard extends React.Component {
   		var today = new Date();
   		var year = today.getFullYear();
 
+  		if (this.refs.addYear.value) {
+  			year = this.refs.addYear.value;
+  		}
+
   		const response = await fetch('http://169.55.81.216:32000/api/v1/user/'
   									+this.props.state.user
   									+'?year='+year
   									+'&type='+this.state.addDayType
-  									+'&days='+this.refs.addDays.value,{
+  									+'&days='+this.refs.addDays.value
+  									+'&location='+this.refs.addLocation.value,{
       		method: "POST",
       		headers: {
         		"Content-Type": "application/json"
       		}
     	});
 
-    	const daysAdded = await response.ok;
+    	const status = await response.status;
 
-    	if (daysAdded) {
+    	if (status === 200) {
+    		this.setState({addError: false});
     		this.getData();
+    	} else if (status === 400) {
+    		this.setState({addError: true});
+    	} else if (status === 403) {
+    		this.setState({session: false});
     	}
   	}
 
@@ -139,7 +182,7 @@ class Dashboard extends React.Component {
   		}
 
   		if (!days) {
-  			if (this.state.editDayType === "remote" && this.refs.location.value) {
+  			if (this.state.editDayType === "remote" && this.refs.editLocation.value) {
   				days = this.state.data[this.state.currentIndex][this.state.editDayType][this.refs.location.value];
   			} else {
   				days = this.state.data[this.state.currentIndex][this.state.editDayType];
@@ -151,7 +194,7 @@ class Dashboard extends React.Component {
   									+'?year='+this.state.data[this.state.currentIndex].year
   									+'&type='+this.state.editDayType
   									+'&days='+days
-  									+'&location='+this.refs.location.value,{
+  									+'&location='+this.refs.editLocation.value,{
       		method: "PUT",
       		headers: {
         		"Content-Type": "application/json"
@@ -159,22 +202,31 @@ class Dashboard extends React.Component {
       		body: JSON.stringify(body)
     	});
 
-    	const daysEdited = await response.ok;
+    	const status = await response.status;
 
-    	if (daysEdited) {
+    	if (status === 200) {
+    		this.setState({editError: false});
     		this.getData();
+    	} else if (status === 400) {
+    		this.setState({editError: true});
+    	} else if (status === 403) {
+    		this.setState({session: false});
     	}
+    	
   	}
 
   	clickChart = (clickedDay) => {
   		var dayType = clickedDay[0]._model.label.toLowerCase();
 
+  		var dayValue = 0;
+  		var isRemote = false;
+
   		if (dayType === "remote") {
-  			var dayValue = this.state.data[this.state.currentIndex][clickedDay[0]._model.label.toLowerCase()].total;
-  			var isRemote = true;
+  			dayValue = this.state.data[this.state.currentIndex][clickedDay[0]._model.label.toLowerCase()].total;
+  			isRemote = true;
   		} else {
-  			var dayValue = this.state.data[this.state.currentIndex][clickedDay[0]._model.label.toLowerCase()];
-  			var isRemote = false;
+  			dayValue = this.state.data[this.state.currentIndex][clickedDay[0]._model.label.toLowerCase()];
+  			isRemote = false;
   		}
   		this.setState({editDayType: dayType,
   						editDayValue: dayValue,
@@ -255,6 +307,12 @@ class Dashboard extends React.Component {
 			    		}});
   	}
 
+  	logout = (e) => {
+  		if(e) e.preventDefault();
+
+  		this.setState({session: false});
+  	}
+
   	handleChange(e) {
   		if(e) e.preventDefault();
 
@@ -272,14 +330,20 @@ class Dashboard extends React.Component {
 			return (
 				<div>
 					<h1>Dashboard</h1>
+					<button onClick={this.logout} >Logout</button><br/>
 					<button disabled={this.state.currentIndex === 0} onClick={this.previous} >&laquo; Previous</button>
 					<button disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} >Next &raquo;</button>
 					<br/>
 					<h4>{this.state.data[this.state.currentIndex].startdate} - {this.state.data[this.state.currentIndex].lastdate}</h4>
 					<Doughnut data={this.state.charData} onElementsClick={this.clickChart} />
-					<h5>Remote Locations</h5>
-					<Doughnut data={this.state.remoteCharData} />
-					<button>Export Data</button><br/><br/>
+					{this.state.data[this.state.currentIndex].remote.total > 0 ? 
+						(<div>
+							<h5>Remote Locations</h5>
+							<Doughnut data={this.state.remoteCharData} />
+						</div>
+						) : ''
+					}
+					<button onClick={this.exportData} >Export Data</button><br/><br/>
 					<form method="post" onSubmit={this.addDays}>
 						Add Days<br/>
 						<select value={this.state.addDayType} onChange={this.handleChange}>
@@ -289,11 +353,14 @@ class Dashboard extends React.Component {
 							<option value="Holidays">Holidays</option>
 							<option value="Sick">Sick</option>
 						</select><br/>
+						Year:<br/>
+						<input type="number" min="1900" max={new Date().getFullYear()} ref="addYear" /><br/>
 						# of Days:<br/>
 						<input type="number" min="1" max="365" ref="addDays"/><br/>
 						Location:<br/>
-						<input type="text" ref="location" disabled={!this.state.isAddRemote}/>
-						<input type="submit" value="Add"/>
+						<input type="text" ref="addLocation" disabled={!this.state.isAddRemote}/>
+						<input type="submit" value="Add"/><br/>
+						{this.state.addError ? 'Invalid Parameters':''}
 					</form><br/><br/>
 					<form method="post" onSubmit={this.editDays}>
 						Edit {this.state.editDayType.charAt(0).toUpperCase() + this.state.editDayType.slice(1)} Days<br/>
@@ -306,8 +373,9 @@ class Dashboard extends React.Component {
 						# of Days:<br/>
 						<input type="number" min="0" max={this.state.editDayValue} ref="editDays"/><br/>
 						Location:<br/>
-						<input type="text" ref="location" disabled={!this.state.isEditRemote}/>
-						<input type="submit" value="Update"/>
+						<input type="text" ref="editLocation" disabled={!this.state.isEditRemote}/>
+						<input type="submit" value="Update"/><br/>
+						{this.state.editError ? 'Invalid Parameters':''}
 					</form>
 				</div>
 			);
@@ -329,7 +397,8 @@ class Dashboard extends React.Component {
 						<input type="number" min="1" ref="days"/><br/>
 						Location:<br/>
 						<input type="text" ref="location" disabled={!this.state.isAddRemote}/>
-						<input type="submit" value="Add"/>
+						<input type="submit" value="Add"/><br/>
+						{this.state.addError ? 'Invalid Parameters':''}
 					</form>
 				</div>
 			);

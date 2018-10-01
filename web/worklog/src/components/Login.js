@@ -21,6 +21,7 @@ class Login extends React.Component {
 					<NavLink to="/reset" ><button>Reset Password</button></NavLink>
 					<input type="submit" value="Login"/>
 				</form>
+				{this.props.state.invalidLogin ? "Invalid Credentials" : ""}
 			</div>
 		);
 	}

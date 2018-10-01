@@ -1,5 +1,4 @@
 import React from "react";
-import {NavLink} from "react-router-dom";
 
 class Reset extends React.Component {
 
@@ -21,9 +20,10 @@ class Reset extends React.Component {
 					<input type="password" ref="password"/><br/><br/>
 					New Password:<br/>
 					<input type="password" ref="newPassword"/><br/><br/>
-					<NavLink to="/login" ><button>Cancel</button></NavLink>
+					<button onClick={this.props.redirectToLogin} >Cancel</button>
 					<input type="submit" value="Reset"/>
 				</form>
+				{this.props.state.invalidReset ? "Invalid Credentials" : ""}
 			</div>
 		);
 	}
