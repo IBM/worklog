@@ -1,5 +1,6 @@
 import React from "react";
-import {Button, Form, FormGroup, FormFeedback, Label, Input} from "reactstrap";
+import {Button, Form, FormGroup, FormFeedback, Label, Input, Container, Row, Col, Card, CardBody} from "reactstrap";
+import {PacmanLoader} from "react-spinners";
 
 class Reset extends React.Component {
 
@@ -20,26 +21,39 @@ class Reset extends React.Component {
 
 	render() {
 		return (
-			<div>
-				<h1>Reset Password</h1>
-				<Form method="post" onSubmit={this.submit}>
-					<FormGroup>
-						<Label>Username:</Label>
-						<Input invalid={this.props.state.invalidReset} type="text" value={this.state.username} onChange={e => this.setState({username: e.target.value})}/>
-					</FormGroup>
-					<FormGroup>
-						<Label>Password:</Label>
-						<Input invalid={this.props.state.invalidReset} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
-					</FormGroup>
-					<FormGroup>
-						<Label>New Password:</Label>
-						<Input invalid={this.props.state.invalidReset} type="password" value={this.state.newPassword} onChange={e => this.setState({newPassword: e.target.value})}/>
-						<FormFeedback>Invalid credentials</FormFeedback>
-					</FormGroup>
-					<Button onClick={this.props.redirectToLogin} color="danger" >Cancel</Button>
-					<Button type="submit" color="primary">Reset</Button>
-				</Form>
-			</div>
+			<Container>
+				<Row>
+					<Col sm={{size: 6, offset: 3}}>
+						<h1>Reset Password</h1>
+					</Col>
+				</Row>
+				<Row>
+					<Col sm={{size: 6, offset: 3}}>
+						<Card>
+							<CardBody>
+								<Form method="post" onSubmit={this.submit}>
+									<FormGroup>
+										<Label>Username:</Label>
+										<Input invalid={this.props.state.invalidReset} type="text" value={this.state.username} onChange={e => this.setState({username: e.target.value})}/>
+									</FormGroup>
+									<FormGroup>
+										<Label>Password:</Label>
+										<Input invalid={this.props.state.invalidReset} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
+									</FormGroup>
+									<FormGroup>
+										<Label>New Password:</Label>
+										<Input invalid={this.props.state.invalidReset} type="password" value={this.state.newPassword} onChange={e => this.setState({newPassword: e.target.value})}/>
+										<FormFeedback>Invalid credentials</FormFeedback>
+									</FormGroup>
+									<Button onClick={this.props.redirectToLogin} color="danger" className="float-left" >Cancel</Button>
+									<Button type="submit" color="primary" className="float-right" >Reset</Button>
+								</Form>
+							</CardBody>
+						</Card>
+						<PacmanLoader loading={this.props.state.loading} color='#FFFF00'/>
+					</Col>
+				</Row>
+			</Container>
 		);
 	}
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import {NavLink} from "react-router-dom";
-import {Button, Form, FormGroup, FormFeedback, Label, Input} from "reactstrap";
+import {Button, Form, FormGroup, FormFeedback, Label, Input, Container, Row, Col, Card, CardBody} from "reactstrap";
+import {PacmanLoader} from "react-spinners";
 
 class Login extends React.Component {
 
@@ -18,23 +19,36 @@ class Login extends React.Component {
 
 	render() {
 		return (
-			<div>
-				<h1>Login</h1>
-				<Form method="post" onSubmit={this.submit}>
-					<FormGroup>
-						<Label>Username:</Label>
-						<Input invalid={this.props.state.invalidLogin} type="text" value={this.state.username} onChange={e => this.setState({username: e.target.value})}/>
-					</FormGroup>
-					<FormGroup>
-						<Label>Password:</Label>
-						<Input invalid={this.props.state.invalidLogin} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
-						<FormFeedback>Invalid credentials</FormFeedback>
-					</FormGroup>
-					<NavLink to="/" ><Button color="danger">Cancel</Button></NavLink>
-					<NavLink to="/reset" ><Button color="primary">Reset Password</Button></NavLink>
-					<Button type="submit" color="primary">Login</Button>
-				</Form>
-			</div>
+			<Container>
+				<Row>
+					<Col sm={{size: 6, offset: 3}}>
+						<h1>Login</h1>
+					</Col>
+				</Row>
+				<Row>
+					<Col sm={{size: 6, offset: 3}}>
+						<Card>
+							<CardBody>
+								<Form method="post" onSubmit={this.submit}>
+									<FormGroup>
+										<Label>Username:</Label>
+										<Input invalid={this.props.state.invalidLogin} type="text" value={this.state.username} onChange={e => this.setState({username: e.target.value})}/>
+									</FormGroup>
+									<FormGroup>
+										<Label>Password:</Label>
+										<Input invalid={this.props.state.invalidLogin} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
+										<FormFeedback>Invalid credentials</FormFeedback>
+									</FormGroup>
+									<NavLink to="/" ><Button color="danger" className="float-left">Cancel</Button></NavLink>
+									<NavLink to="/reset" ><Button color="secondary">Reset Password</Button></NavLink>
+									<Button type="submit" color="primary" className="float-right">Login</Button>
+								</Form>
+							</CardBody>
+						</Card>
+						<PacmanLoader loading={this.props.state.loading} color='#FFFF00'/>
+					</Col>
+				</Row>
+			</Container>
 		);
 	}
 };
