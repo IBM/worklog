@@ -1,5 +1,5 @@
 decorator==4.3.0
-docker_py==1.10.6
+docker==3.5.0
 flasgger==0.9.1
 Flask==1.0.2
 Flask-Cors==3.0.6
