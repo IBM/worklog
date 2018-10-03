@@ -16,7 +16,7 @@ tags:
 - name: "Users"
   description: "Operations associated with users"
 schemes:
-- "http"
+- "https"
 paths:
   /login:
     post:

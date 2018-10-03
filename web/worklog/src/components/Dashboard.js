@@ -3,6 +3,8 @@ import {Doughnut} from "react-chartjs-2";
 import { Button, Modal, ModalHeader, ModalBody, Card, CardTitle, CardBody, CardHeader, Form, FormGroup, FormFeedback, Label, Input, Container, Row, Col } from 'reactstrap';
 import {PacmanLoader} from "react-spinners";
 
+const API_BASE_URL = process.env.REACT_APP_APP_SERVER;
+
 function getRandomColor(length) {
 	var result = [];
     var color = '';
@@ -83,7 +85,7 @@ class Dashboard extends React.Component {
 
 	    this.props.updateLoading();
 
-	    const response = await fetch('http://169.55.81.216:32000/api/v1/user/'+sessionStorage.getItem("user"));
+	    const response = await fetch(API_BASE_URL+'/api/v1/user/'+sessionStorage.getItem("user"));
 	    const data = await response.json();
 	    if ("error" in data) {
 	    	if (data["error"] === "Not logged in") {
@@ -161,7 +163,7 @@ class Dashboard extends React.Component {
 
   		this.props.updateLoading();
 
-  		const response = await fetch('http://169.55.81.216:32000/api/v1/user/'
+  		const response = await fetch(API_BASE_URL+'/api/v1/user/'
   									+sessionStorage.getItem("user")
   									+'?year='+this.state.addYearValue
   									+'&type='+this.state.addDayType
@@ -215,7 +217,7 @@ class Dashboard extends React.Component {
 
   		this.props.updateLoading();
 
-  		const response = await fetch('http://169.55.81.216:32000/api/v1/user/'
+  		const response = await fetch(API_BASE_URL+'/api/v1/user/'
   									+sessionStorage.getItem("user")
   									+'?year='+this.state.data[this.state.currentIndex].year
   									+'&type='+this.state.editDayType

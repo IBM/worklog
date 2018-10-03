@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: worklogui
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: worklogui-deployment
+        version: v1
+    spec:
+      containers:
+      - name: worklogui
+        image: maxshapiro32/worklogui
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 3000
+        env:
+        - name: REACT_APP_APP_SERVER
+          value: https://<INGRESS_SUBDOMAIN>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worklogui-service
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 32001
+      name: http
+  type: NodePort
+  selector:
+    name: worklogui-deployment

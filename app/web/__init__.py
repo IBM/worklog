@@ -9,6 +9,8 @@ Initializer for the work log application
 from flask import Flask
 from flasgger import Swagger
 import yaml
+from flask_cors import CORS
+import os
 
 def create_app():
     worklog_app = Flask(__name__)
@@ -22,7 +24,11 @@ def create_app():
     with open("app/web/swagger.yaml") as stream:
         swagger = yaml.safe_load(stream)
 
+    swagger["host"] = os.getenv("HOST_IP", "localhost:5000")
+
     Swagger(worklog_app, template=swagger, config=getSwaggerConfig())
+    
+    CORS(worklog_app)
     
     return worklog_app
 

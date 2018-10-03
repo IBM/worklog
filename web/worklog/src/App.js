@@ -9,6 +9,8 @@ import Reset from "./components/Reset";
 import Dashboard from "./components/Dashboard";
 import Error from "./components/Error";
 
+const API_BASE_URL = process.env.REACT_APP_APP_SERVER;
+
 class App extends React.Component {
 
   constructor(props) {
@@ -69,7 +71,7 @@ class App extends React.Component {
 
       this.updateLoading();
 
-      const response = await fetch('http://169.55.81.216:32000/api/v1/login',{
+      const response = await fetch(API_BASE_URL+'/api/v1/login',{
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -101,7 +103,7 @@ class App extends React.Component {
 
     this.updateLoading();
 
-    const response = await fetch('http://169.55.81.216:32000/api/v1/user/create',{
+    const response = await fetch(API_BASE_URL+'/api/v1/user/create',{
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -122,7 +124,7 @@ class App extends React.Component {
 
     this.updateLoading();
 
-    const response = await fetch('http://169.55.81.216:32000/api/v1/user/'+username+'/reset',{
+    const response = await fetch(API_BASE_URL+'/api/v1/user/'+username+'/reset',{
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
