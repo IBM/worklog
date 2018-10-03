@@ -1,3 +1,4 @@
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -11,14 +12,14 @@ spec:
         version: v1
     spec:
       containers:
-      - name: worklogui
-        image: maxshapiro32/worklogui
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 3000
-        env:
-        - name: REACT_APP_APP_SERVER
-          value: https://<INGRESS_SUBDOMAIN>
+        - name: worklogui
+          image: maxshapiro32/worklogui
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: REACT_APP_APP_SERVER
+              value: https://<INGRESS_SUBDOMAIN>
 ---
 apiVersion: v1
 kind: Service

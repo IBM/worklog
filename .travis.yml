@@ -1,0 +1,22 @@
+---
+dist: trusty
+cache: pip
+sudo: required
+language: python
+python:
+  - "3.6"
+services:
+  - docker
+before_install:
+  - sudo apt-get install shellcheck
+  - sudo pip install yamllint
+  - git clone https://github.com/IBM/pattern-ci
+before_script:
+  - "./pattern-ci/tests/shellcheck-lint.sh"
+  - "./pattern-ci/tests/yaml-lint.sh 'app/web'"
+jobs:
+  include:
+    - script: ./travis-tests/docker-compose.sh
+    - services:
+        - docker
+      script: ./travis-tests/local-py.sh
