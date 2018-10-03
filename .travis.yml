@@ -17,6 +17,4 @@ before_script:
 jobs:
   include:
     - script: ./travis-tests/docker-compose.sh
-    - services:
-        - docker
-      script: ./travis-tests/local-py.sh
+    - script: ./travis-tests/local-py.sh
