@@ -2,6 +2,7 @@ decorator==4.3.0
 docker_py==1.10.6
 flasgger==0.9.1
 Flask==1.0.2
+Flask-Cors==3.0.6
 pymongo==3.7.1
 simple-crypt==4.1.7
 PyYAML==3.13
