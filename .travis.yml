@@ -17,4 +17,5 @@ before_script:
 jobs:
   include:
     - script: ./travis-tests/docker-compose.sh
-    - script: ./travis-tests/local-py.sh
+    - install: docker pull mongo
+      script: ./travis-tests/local-py.sh

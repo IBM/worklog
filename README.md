@@ -1,8 +1,4 @@
-The README for a Code Pattern is very prescriptive, use the following template to get you started.
-
-<!--Put badges at the very top -->
-<!--change the repo -->
-[![Build Status](https://travis-ci.org/IBM/watson-banking-chatbot.svg?branch=master)](https://travis-ci.org/IBM/watson-banking-chatbot)
+[![Build Status](https://travis-ci.com/IBM/worklog.svg?branch=master)](https://travis-ci.com/IBM/worklog)
 
 # Work Log
 In this Code Pattern, we will create a Work Log web application using Flask, Mongo, and Kubernetes. The Work Log application is used to keep track of and log different types of days that are associated with work. The different types of days include:
@@ -20,16 +16,14 @@ When the reader has completed this Code Pattern, they will understand how to:
 * Deploy and run a Docker container on Kubernetes
 
 
-![](readme_images/architecture.jpeg)
+![](readme_images/architecture.png)
 
 ## Architecture
 
 1. User interacts with the App UI to initially create an account, login to account, or reset password for their account. Once User is logged in, they can view, add, and edit their work log data.
-2. All these actions are controlled through API calls by the application using API Connect.
-3. API Connect links the connected API calls to Kubernetes where the actual APIs and application are hosted.
-4. The API calls are processed in the Flask application in the Docker container on Kubernetes and are handled accordingly.
-5. The data is stored, gathered, and/or modified depending on the API calls.
-6. The response from the API calls are handled accordingly be the App UI.
+2. The API calls are processed in the Flask application in the Docker container on Kubernetes and are handled accordingly.
+3. The data is stored, gathered, and/or modified depending on the API calls.
+4. The response from the API calls are handled accordingly be the App UI.
 
 <!--Update this section-->
 ## Included components
