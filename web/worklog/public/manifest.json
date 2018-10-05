@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Worklog",
+  "name": "Worklog Code Pattern",
   "icons": [
     {
       "src": "favicon.ico",

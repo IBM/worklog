@@ -25,6 +25,9 @@ def create_app():
         swagger = yaml.safe_load(stream)
 
     swagger["host"] = os.getenv("HOST_IP", "localhost:5000")
+    
+    if swagger["host"] == "localhost:5000":
+        swagger["schemes"] = ["http"]
 
     Swagger(worklog_app, template=swagger, config=getSwaggerConfig())
     
