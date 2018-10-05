@@ -1,6 +1,74 @@
-Blog Post
+# Short Name
 
-The original intention of this application was to be a personal work log for myself to log total days worked, days worked remotely, vacation days used, and holidays used. This was a command line Python application that saved data to a CSV file.
+Deploy Python Flask application in Kubernetes.
+
+# Short Description
+
+Log and view different types of work days in a database with API calls.
+
+# Offering Type
+
+Cloud
+
+# Summary
+
+This code pattern creates a Python Flask application that incorporates MongoDB as microservices in Docker containers. These containers are deployed in Kubernetes.
+
+# Author
+
+Max Shapiro
+
+# Code
+
+* https://github.com/IBM/worklog
+
+# Description
+
+In this Code Pattern, we will create a Work Log web application using Flask, MongoDB, and Kubernetes. The Work Log application is used to keep track of and log different types of days that are associated with work. The different types of days include:
+
+* Working in the office
+* Working remotely
+* Vacation days
+* Holidays
+* Sick days
+
+When the reader has completed this Code Pattern, they will understand how to:
+
+* Create a Python Flask application
+* Incorporate MongoDB into a Python application
+* Deploy and run microservices on Kubernetes
+
+# Flow
+
+![](readme_images/architecture.png)
+
+1. User interacts with the App UI to initially create an account, login to account, or reset password for their account. Once User is logged in, they can view, add, and edit their work log data.
+2. The functionality of the App UI that the User interacts with is handled by React. React is where the API calls are initialized.
+3. The API calls are processed in the Flask API microservice on Kubernetes and are handled accordingly.
+4. The data is stored, gathered, and/or modified in MongoDB depending on the API calls.
+5. The response from the API calls are handled accordingly be the App UI.
+
+# Included components
+
+* [IBM Cloud Container Service](https://console.bluemix.net/docs/containers/container_index.html):  IBM Bluemix Container Service manages highly available apps inside Docker containers and Kubernetes clusters on the IBM Cloud.
+* [Swagger](https://swagger.io/): A framework of API developer tools for the OpenAPI Specification that enables development across the entire API lifecycle.
+
+# Featured technologies
+
+* [Container Orchestration](https://www.ibm.com/cloud-computing/bluemix/containers): Automating the deployment, scaling and management of containerized applications.
+* [Microservices](https://www.ibm.com/developerworks/community/blogs/5things/entry/5_things_to_know_about_microservices?lang=en): Collection of fine-grained, loosely coupled services using a lightweight protocol to provide building blocks in modern application composition in the cloud.
+* [Python](https://www.python.org/): Python is a programming language that lets you work more quickly and integrate your systems more effectively.
+* [Flask](http://flask.pocoo.org/): A microframework for Python for building APIs.
+* [React](https://facebook.github.io/react/): JavaScript library for building User Interfaces.
+* [MongoDB](https://www.mongodb.com/): A document NoSQL database.
+
+# Blog
+
+## My Journey to Creating my First Web Application
+
+## Max Shapiro
+
+## The original intention of this application was to be a personal work log for myself to log total days worked, days worked remotely, vacation days used, and holidays used. This was a command line Python application that saved data to a CSV file.
 
 When the thought was brought up that this application could be modified and scaled to work on the cloud as a web application and with the guide of my manager, I began researching and planning how I could make this a reality. 
 
@@ -40,3 +108,8 @@ Once my restructuring was completed and the application was running where it was
 With the wireframes completed, I could start bringing these wireframes to life. I started researching different Javascript frameworks that I could use to create this GUI. I compared Angular, React, and Vue. I ultimately decided on using React, because it is popluar in the industry and seemed straightforward to learn. Once I learned React and finished the GUI, I deployed it alongside my backend application on the IBM Cloud.
 
 With all parts of the application now successfully running on the IBM Cloud, I began wrapping up my work on this application and reflecting on my time working on this application. Throughout this process I not only had to learn how to use Flask, Mongo, Kubernetes, React, and other various componenets of how to make and structure an application, but also how to use all of these working together. This was definitely a rewarding experience and I hope you enjoyed reading this and using this application!
+
+# Links
+
+* [Flask](http://flask.pocoo.org/)
+* [Swagger Editor](https://editor.swagger.io/)

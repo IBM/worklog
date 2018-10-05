@@ -1,3 +1,4 @@
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -11,11 +12,14 @@ spec:
         version: v1
     spec:
       containers:
-      - name: worklog
-        image: maxshapiro32/worklog
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 5000
+        - name: worklog
+          image: maxshapiro32/worklog
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: HOST_IP
+              value: <INGRESS_SUBDOMAIN>
 ---
 apiVersion: v1
 kind: Service

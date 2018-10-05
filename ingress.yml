@@ -1,0 +1,27 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.bluemix.net/redirect-to-https: "True"
+  name: ingress
+spec:
+  tls:
+    - hosts:
+        - <INGRESS_SUBDOMAIN>
+      secretName: <INGRESS_SECRET>
+  backend:
+    serviceName: worklogui-service
+    servicePort: 3000
+  rules:
+    - host: <INGRESS_SUBDOMAIN>
+      http:
+        paths:
+          - path: /api
+            backend:
+              serviceName: worklog-service
+              servicePort: 5000
+          - path: /flasgger_static
+            backend:
+              serviceName: worklog-service
+              servicePort: 5000
