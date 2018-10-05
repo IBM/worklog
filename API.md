@@ -92,7 +92,7 @@ Password = Password for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 User Already Exists: When the user specified is already a valid user in the database, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -116,7 +116,7 @@ NewPassword = New password for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 Password Not Reset: When the user specified is not a valid username and/or the password specified is not valid/correct, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -282,7 +282,7 @@ No Year Found: When there is no document for the year specified, the response is
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Office Total: When the office variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing office total, the response is a 400 status code. The response body is a JSON object containing an error.
+Invalid Office Total: When the office variable input is invalid and not a positive number, or the reset value is greater than or equal to the existing office total, the response is a 400 status code. The response body is a JSON object containing an error.
 
 Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -321,7 +321,7 @@ __Response__
 
 Success: The response is a 200 status code. The response body is a JSON object containing the remote information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -471,7 +471,7 @@ No Year Found: When there is no document for the year specified, the response is
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Office Total: When the vacation variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
+Invalid Office Total: When the vacation variable input is invalid and not a positive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
 
 Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -557,7 +557,7 @@ __Response__
 
 Success: The response is a 200 status code. The response body is a JSON object containing the reset holiday total information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -595,7 +595,7 @@ __Response__
 
 Success: The response is a 200 status code. The response body is a JSON object containing the sick information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -651,7 +651,7 @@ No Year Found: When there is no document for the year specified, the response is
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Sick Days Total: When the sick variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
+Invalid Sick Days Total: When the sick variable input is invalid and not a positive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
 
 Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
 
