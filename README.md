@@ -90,7 +90,7 @@ $ git clone https://github.com/IBM/worklog
 
 
 # Links
-* [Python: Flask](http://flask.pocoo.org/)
+* [Flask](http://flask.pocoo.org/)
 * [Swagger Editor](https://editor.swagger.io/)
 
 
