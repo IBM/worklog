@@ -216,6 +216,7 @@ class TestScenarios(unittest.TestCase):
         
         '''Create Office Entry'''
         response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-01&type=office')
+        print(response.get_json())
         self.assertEqual(response.status_code, 200)
         
         '''Create Remote Entry'''
