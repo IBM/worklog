@@ -62,8 +62,8 @@ def handleUserData(user=""):
             else:
                 date_split = date.split("-")
                 date = datetime.date(date_split[0],date_split[1],date_split[2])
-        except:
-            return jsonify({"error": "Invalid date given"}), 400
+        except Exception as e:
+            return jsonify({"error": e}), 400
         
     if location:
         location = location.title()
