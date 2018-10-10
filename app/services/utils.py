@@ -8,6 +8,7 @@ Utility functions for services
 
 from pymongo import MongoClient
 import datetime
+import sys
 from simplecrypt import encrypt, decrypt
 
 encKey = b'c\xf8\xccH\xbe\x7ffp\xda\xe4\xa4TY\x03\x85CR<\x97f'
@@ -65,8 +66,13 @@ def getUserDateData(user,date):
     
     if userYearData:
         for dateData in userYearData["entries"]:
-            if datetime.date.fromisoformat(dateData["date"]) == date:
-                return dateData
+            if sys.version_info.major >= 3 and sys.version_info.minor >= 7:
+                if datetime.date.fromisoformat(dateData["date"]) == date:
+                    return dateData
+            else:
+                date_split = dateData["date"].split("-")
+                if datetime.date(int(date_split[0]),int(date_split[1]),int(date_split[2])) == date:
+                    return dateData
         
     return None
 
