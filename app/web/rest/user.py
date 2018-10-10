@@ -8,6 +8,7 @@ User restful end points handling
 
 from flask import Blueprint, request, jsonify
 import datetime
+import sys
 from app.web import utils
 from app.services.user import create_user_service, reset_password_service
 from app.services.worklog import get_worklog_data_service, modify_worklog_data_service
@@ -56,7 +57,11 @@ def handleUserData(user=""):
         
     if date:
         try:
-            date = datetime.date.fromisoformat(date)
+            if sys.version_info.major >= 3 and sys.version_info.minor >= 7:
+                date = datetime.date.fromisoformat(date)
+            else:
+                date_split = date.split("-")
+                date = datetime.date(date_split[0],date_split[1],date_split[2])
         except:
             return jsonify({"error": "Invalid date given"}), 400
         
