@@ -9,110 +9,89 @@ Service for modifying (adding, updating, resetting) work log data in the databas
 from app.services import utils
 from flask import jsonify
 from app.services.worklog import get_worklog_data_service
-import datetime
 
-def addWorklogData(user, year, dayType, days, location):
+def addWorklogData(user, date, dayType, location):
+    if not date:
+        return jsonify({"error": "No date given"}), 400
+    
     if not dayType:
         return jsonify({"error": "No day type given"}), 400
-        
-    userYearData = utils.getUserYearData(user,year)
-            
-    if userYearData:
-        return updateWorklogData(user, year, dayType, days, location, userYearData)
-    else:
-        return setWorklogData(user, year, dayType, days, location)
-
-def setWorklogData(user, year, dayType, days, location):
-    startdate, lastdate = utils.getYearDates(year)
-    
-    if days < 0:
-        return jsonify({"error": "Invalid days given"}), 400
-                
-    utils.addUserWorkLogData(user, year, dayType, days, location, startdate, lastdate)
-    
-    return get_worklog_data_service.getWorklogData(user, year, dayType)
-
-def updateWorklogData(user, year, dayType, days, location, userYearData):
-    _, lastdate = utils.getYearDates(year)
-    
-    updatedData = {"lastdate": lastdate}
     
     if dayType == "remote":
-        updatedData[dayType+".total"] = userYearData[dayType]["total"]+days
+        if not location:
+            return jsonify({"error": "No location given"}), 400
         
-        if location in userYearData[dayType]["locations"]:
-            if days < 0 or userYearData[dayType]["locations"][location] + days > (userYearData["lastdate"] - userYearData["startdate"]).days:
-                return jsonify({"error": "Invalid days given"}), 400
-            
-            updatedData[dayType+".locations."+location] = userYearData[dayType]["locations"][location]+days
-        else:
-            if days < 0:
-                return jsonify({"error": "Invalid days given"}), 400
-            
-            locations = userYearData[dayType]["locations"]
+    hasDateData = utils.getUserDateData(user, date)
+    
+    if hasDateData:
+        return jsonify({"error": "Data already exists for date given"}), 400
+        
+    utils.addUserWorkLogData(user, date, dayType, location)
+    
+    return get_worklog_data_service.getWorklogData(user, None, date)
 
-            locations[location] = days
-            
-            updatedData[dayType+".locations"] = locations
-    else:
-        if days < 0 or userYearData[dayType] + days > (userYearData["lastdate"] - userYearData["startdate"]).days:
-            return jsonify({"error": "Invalid days given"}), 400
-            
-        updatedData[dayType] = userYearData[dayType]+days
-            
-    utils.updateUserWorkLog(user, year, updatedData)
-                
-    return get_worklog_data_service.getWorklogData(user, year, dayType)
-
-def resetWorklogData(user, year, dayType, days, location, data):
+def updateWorklogData(user, date, dayType, location):
+    if not date:
+        return jsonify({"error": "No date given"}), 400
+    
     if not dayType:
         return jsonify({"error": "No day type given"}), 400
-        
-    userYearData = utils.getUserYearData(user,year)
     
-    if userYearData:
-        if dayType == "remote":
-            if days > userYearData[dayType]["locations"][location] or days < 0:
-                return jsonify({"error": "Invalid days given"}), 400
+    if dayType == "remote":
+        if not location:
+            return jsonify({"error": "No location given"}), 400
+        
+    userDateData = utils.getUserDateData(user, date)
+    
+    if userDateData:
+                
+        utils.updateUserWorkLog(user, date, dayType, location)
+                
+        return get_worklog_data_service.getWorklogData(user, None, date)
             
-            updatedData = {dayType+".total" : userYearData[dayType]["total"]-userYearData[dayType]["locations"][location]+days,
-                           dayType+".locations."+location : days}
-        else:
-            if days > userYearData[dayType] or days < 0:
-                return jsonify({"error": "Invalid days given"}), 400
-                
-            updatedData = {dayType: days}
-                
-        if data:
-            startdate = None
-            lastdate = None
-            if "lastdate" in data:
-                try:
-                    lastdate = datetime.datetime(year,data["lastdate"]["month"],data["lastdate"]["day"])
-                except:
-                    return jsonify({"error": "Invalid dates given"}), 400
-                    
-            if "startdate" in data:
-                try:
-                    startdate = datetime.datetime(year,data["startdate"]["month"],data["startdate"]["day"])
-                except:
-                    return jsonify({"error": "Invalid dates given"}), 400
-                        
-                if lastdate:
-                    if (lastdate - startdate).days < 0:
-                        return jsonify({"error": "Invalid dates given"}), 400
-                else:
-                    if (userYearData["lastdate"] - startdate).days < 0:
-                        return jsonify({"error": "Invalid dates given"}), 400
-                        
-            if startdate:
-                updatedData["startdate"] = startdate
-                
-            if lastdate:
-                updatedData["lastdate"] = lastdate
-                
-        utils.updateUserWorkLog(user, year, updatedData)
-                
-        return get_worklog_data_service.getWorklogData(user, year, dayType)
+    return jsonify({"error": "No data found to update"}), 404
+
+def deleteWorklogData(user, date, year, deleteUser, deleteAll, deleteYear):
+    if deleteUser:
+        userIsDeleted = utils.deleteUser(user)
+        
+        if userIsDeleted:
+            return jsonify({"success":"Successfully deleted user"})
+        
+        return jsonify({"error":"No user deleted"}), 404
+    
+    elif deleteAll:
+        utils.deleteUserData(user)
+        
+        userData = utils.getUserWorklog(user)
+        
+        if len(userData) == 0:
+            return jsonify({"success":"Successfully deleted user data"})
+        
+        return jsonify({"error":"No user data deleted"}), 404
+    
+    elif deleteYear:
+        if year:
+            utils.deleteUserYearData(user, year)
             
-    return jsonify({"error": "No data found for year given"}), 404
+            userData = utils.getUserYearData(user, year)
+            
+            if not userData:
+                return jsonify({"success":"Successfully deleted user year data"})
+        
+        return jsonify({"error":"No user year data deleted"}), 404
+    
+    else:
+        if date:
+            userDateData = utils.getUserDateData(user, date)
+        
+            if userDateData:
+                
+                utils.deleteUserDateData(user, date)
+                
+                userDateData = utils.getUserDateData(user, date)
+        
+                if not userDateData:
+                    return jsonify({"success":"Successfully deleted date data"})
+                
+        return jsonify({"error":"No date data removed"}), 404

@@ -7,6 +7,7 @@ User restful end points handling
 '''
 
 from flask import Blueprint, request, jsonify
+import datetime
 from app.web import utils
 from app.services.user import create_user_service, reset_password_service
 from app.services.worklog import get_worklog_data_service, modify_worklog_data_service
@@ -33,13 +34,16 @@ def resetPassword(user=""):
             return passwordReset
     return jsonify({"error":"Did not reset password"}),403
 
-@user_v1_blueprint.route('/user/<user>', methods=['GET','POST','PUT'])
+@user_v1_blueprint.route('/user/<user>', methods=['GET','POST','PUT','DELETE'])
 @utils.logged_in
 def handleUserData(user=""):
     year = request.args.get('year',None,type=int)
     dayType = request.args.get('type',None,type=str)
-    days = request.args.get('days',0,type=int)
+    date = request.args.get('date',None,type=str)
     location = request.args.get('location',None,type=str)
+    deleteUser = request.args.get('deleteuser',False,type=bool)
+    deleteAll = request.args.get('deleteall',False,type=bool)
+    deleteYear = request.args.get('deleteyear',False,type=bool)
     
     if 'year' in request.args and not year:
         return jsonify({"error": "Invalid year given"}), 400
@@ -47,18 +51,27 @@ def handleUserData(user=""):
     if dayType:
         dayType = dayType.lower()
 
-        if dayType not in {"office","remote","vacation","holidays","sick","total"}:
+        if dayType not in {"office","remote","vacation","holidays","sick"}:
             return jsonify({"error": "Invalid day type given"}), 400
+        
+    if date:
+        try:
+            date = datetime.date.fromisoformat(date)
+        except:
+            return jsonify({"error": "Invalid date given"}), 400
         
     if location:
         location = location.title()
     
     if request.method == "GET":
-        return get_worklog_data_service.getWorklogData(user, year, dayType) 
+        return get_worklog_data_service.getWorklogData(user, year, date) 
         
     elif request.method == "POST":
-        return modify_worklog_data_service.addWorklogData(user, year, dayType, days, location)
-   
+        return modify_worklog_data_service.addWorklogData(user, date, dayType, location)
+    
     elif request.method == "PUT":
-        return modify_worklog_data_service.resetWorklogData(user, year, dayType, days, location, request.get_json())
+        return modify_worklog_data_service.updateWorklogData(user, date, dayType, location)
+    
+    elif request.method == "DELETE":
+        return modify_worklog_data_service.deleteWorklogData(user, date, year, deleteUser, deleteAll, deleteYear)
     

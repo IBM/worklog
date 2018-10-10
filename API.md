@@ -4,57 +4,23 @@
 	* [Login](#login)
 	* [Create User](#create-user)
 	* [Reset Password](#reset-password)
+	* [Delete User](#delete-user)
+* [Work Log Data](#work-log-data)
+	* [View All Work Log Data](#view-all-work-log-data)
+	* [Delete All Work Log Data](#delete-all-work-log-data)
 * [Year](#year)
 	* [View Work Log in a Given Year](#view-work-log-in-a-given-year)
-* [Total](#total)
-	* [View Total Days Worked in a Given Year](#view-total-days-worked-in-a-given-year)
-* [Office](#office)
-	* [View Days Worked in Office in a Given Year](#view-days-worked-in-office-in-a-given-year)
-	* [Update Days Worked in Office in Current Year](#update-days-worked-in-office-in-current-year)
-	* [Reset Days Worked in Office in a Given Year](#reset-days-worked-in-office-in-a-given-year)
-* [Remote](#remote)
-	* [View Days Worked Remote in a Given Year](#view-days-worked-remote-in-a-given-year)
-	* [Update Days Worked Remote in a Specific Location in Current Year](#update-days-worked-remote-in-a-specific-location-in-current-year)
-	* [Reset Days Worked Remote in a Specific Location in a Given Year](#reset-days-worked-remote-in-a-specific-location-in-a-given-year)
-* [Vacation](#vacation)
-	* [View Vacation Days Used in a Given Year](#view-vacation-days-used-in-a-given-year)
-	* [Update Vacation Days Used in Current Year](#update-vacation-days-used-in-current-year)
-	* [Reset Vacation Days in a Given Year](#reset-vacation-days-in-a-given-year)
-* [Holidays](#holidays)
-	* [View Holidays in a Given Year](#view-holidays-in-a-given-year)
-	* [Update Holidays in Current Year](#update-holidays-in-current-year)
-	* [Reset Holidays in a Given Year](#reset-holidays-in-a-given-year)
-* [Sick](#sick)
-	* [View Sick Days Used in a Given Year](#view-sick-days-used-in-a-given-year)
-	* [Update Sick Days Used in Current Year](#update-sick-days-used-in-current-year)
-	* [Reset Sick Days Used in a Given Year](#reset-sick-days-used-in-a-given-year)
+	* [Delete Work Log Data for a Given Year](#delete-work-log-data-for-a-given-year)
+* [Entry](#entry)
+	* [View Entry](#view-entry)
+	* [Add Entry](#add-entry)
+	* [Update Entry](#update-entry)
+	* [Delete Entry](#delete-entry)
+
 
 # Users
 
-This application supports multiple users. Each user is a document in the database that contains the following information:
-
-```
-{
-	"_id": ObjectId,
-	"years":	[
-					{
-						"year": Integer,
-						"startdate":	Date,
-						"lastdate": Date,
-						"office":	Integer,
-						"remote": {
-							"total":	Integer,
-							"locations": {
-								String: Integer
-							}
-						},
-						"vacation":	Integer,
-						"holidays":	Integer,
-						"sick":	Integer
-					}
-				]
-}
-```
+This application supports multiple users. Each user is a document in the database that requires a username and password.
 
 ## Login
 
@@ -120,6 +86,85 @@ Success: The response is a 200 status code. The response body is a JSON object c
 
 Password Not Reset: When the user specified is not a valid username and/or the password specified is not valid/correct, the response is a 403 status code. The response body is a JSON object containing an error message.
 
+## Delete User
+
+A user can be deleted from the database.
+
+__Command__
+
+```
+curl http://localhost:5000/api/v1/user/<user>?deleteuser=true -X DELETE
+```
+
+User = Username for user.
+
+__Response__
+
+Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+
+User Not Deleted: If the specified user is not deleted, the response is a 404 status code. The response body is a JSON object containing an error message.
+
+Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
+
+# Work Log Data
+
+Each user has a document in the database that stores all of their associated work log information. The data being stored is:
+
+```
+{
+	"_id": ObjectId,
+	"years":	[
+					{
+						"year": Integer,
+						"entries": [
+								{
+									"date": String,
+									"type": String,
+									"location": String
+								}
+							]
+					}
+				]
+}
+```
+
+Visit [Entry](#entry) to see more information about the entry structure.
+
+## View All Work Log Data
+
+__Command__
+
+```
+curl http://localhost:5000/api/v1/user/<user>
+```
+
+User = Username for user.
+
+__Response__
+
+Success: The response is a 200 status code. The response body is a JSON object containing all of the logged information for a user.
+
+Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
+
+
+## Delete All Work Log Data
+
+__Command__
+
+```
+curl  http://localhost:5000/api/v1/user/<user>?deleteall=true -X DELETE
+```
+
+User = Username for user.
+
+__Response__
+
+Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+
+Work Log Data Not Deleted: When there is no data to delete, the response is a 404 status code. The response body is a JSON object containing an error message.
+
+Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
+
 # Year
 
 Each year is a document in a years list located in each user's unique document in the database that contains the following information:
@@ -127,20 +172,17 @@ Each year is a document in a years list located in each user's unique document i
 ```
 {
 	"year": Integer,
-	"startdate":	Date,
-	"lastdate": Date,
-	"office":	Integer,
-	"remote": {
-		"total":	Integer,
-		"locations": {
-			String: Integer
-		}
-	},
-	"vacation":	Integer,
-	"holidays":	Integer,
-	"sick":	Integer
+	"entries": [
+					{
+						"date": String,
+						"type": String,
+						"location": String
+					}
+				]
 }
 ```
+
+Visit [Entry](#entry) to see more information about the entry structure.
 
 ## View Work Log in a Given Year
 
@@ -164,495 +206,157 @@ Invalid Year: When the year specified is not a valid integer year, the response 
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
-# Total
-
-The total for each year refers to the total number of days worked during a calendar year. This includes both days worked in the office and remote.
-
-```
-{
-	"total":	Integer,
-	"startdate":	Date,
-	"lastdate":	Date
-}
-```
-
-## View Total Days Worked in a Given Year
+## Delete Work Log Data for a Given Year
 
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=total
+curl http://localhost:5000/api/v1/user/<user>?year=<year>&deleteyear=true' -X DELETE
 ```
 
 User = Username for user.
 
-Year = Year to view.
+Year = Year to delete.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object containing the total information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
+Year Data Not Deleted: When there is no year specified, the response is a 404 status code. The response body is a JSON object containing an error message.
+
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
-# Office
+# Entry
 
-The office for each year refers to the number of days worked in the office during a calendar year.
+An entry refers to worklog data associated with a specific day.
 
 ```
 {
-	"office":	Integer,
-	"startdate":	Date,
-	"lastdate":	Date
+	"date": String,
+	"type": String,
+	"location": String
 }
 ```
 
-## View Days Worked in Office in a Given Year
+Date must follow the format "YYYY-MM-DD"
+Type must be one of the following:
+	* office
+	* remote
+	* vacation
+	* holidays
+	* sick
+Location is only required when the Type is `remote`
+
+## View Entry
 
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=office
+curl http://localhost:5000/api/v1/user/<user>?date=<date>
 ```
 
 User = Username for user.
 
-Year = Year to view.
+Date = Date to view.
 
 __Response__
 
 Success: The response is a 200 status code. The response body is a JSON object containing the office information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
 
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
+Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
-## Update Days Worked in Office in Current Year
+## Add Entry
 
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=office&days=<office> -X POST
+curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -X POST
 ```
 
 User = Username for user.
 
-Year = Year to update.
+Date = Date to add.
 
-Office = Number of days to be added to the already existing office total.
+Type = Type to add.
+
+Location = Location to add. Only required if Type is `remote`
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object containing the updated office total information for a given year.
+Success: The response is a 200 status code. The response body is a JSON object containing the office information for a given year.
 
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
+Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Office Total: When the office variable input is invalid and not a positive number, or the total to increase by plus the already existing total is greater than the number of total days from the given year's start date to the latest date logged, the response is a 400 status code. The response body is a JSON object containing an error.
+Invalid Type: When the type specified is not a valid type, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+Date Data Already Exists: When the date specified is part of an existing entry in the work log, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+No Date Specified: When there is no date query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+No Type Specified: When there is no type query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+No Location Specified: When there is no location query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
-## Reset Days Worked in Office in a Given Year
+## Update Entry
 
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=office&days=<office> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
+curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -X PUT
 ```
 
 User = Username for user.
 
-Year = Year to reset.
+Date = Date to update.
 
-Office = Number of days to be reset to for working in the office for a given year. To just modify dates while keeping the office total the same, have Office be the same as the already existing office total. 
+Type = Type to update.
 
-Startdate = OPTIONAL month and day to reset start date for the given year.
-
-Lastdate = OPTIONAL month and day to reset last date for the given year.
+Location = Location to update. Only required if Type is `remote`
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object containing the reset office total information for a given year.
+Success: The response is a 200 status code. The response body is a JSON object containing the office information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
+Invalid Type: When the type specified is not a valid type, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Office Total: When the office variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing office total, the response is a 400 status code. The response body is a JSON object containing an error.
+No Date Specified: When there is no date query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
+No Type Specified: When there is no type query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+No Location Specified: When there is no location query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
+
+No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
-# Remote
-
-The remote for each year refers to the number of days worked remotely during a calendar year. In addition, the remote includes a breakdown of the locations worked remotely and the number of days worked at each location.
-
-```
-{
-	"remote": {
-		"total":	Integer,
-		"locations": {
-			String:	Integer
-		}
-	},
-	"startdate":	Date,
-	"lastdate":	Date
-}
-```
-
-## View Days Worked Remote in a Given Year
+## Delete Entry
 
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=remote
+curl http://localhost:5000/api/v1/user/<user>?date=<date> -X DELETE
 ```
 
 User = Username for user.
 
-Year = Year to view.
+Date = Date to delete.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object containing the remote information for a given year.
+Success: The response is a 200 status code. The response body is a JSON object containing the office information for a given year.
 
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Update Days Worked Remote in a Specific Location in Current Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=remote&location=<location>&days=<remote> -X POST
-```
-
-User = Username for user.
-
-Year = Year to update.
-
-Location = Remote location worked to update.
-
-Remote = Number of days to be added to the already existing remote total for the given location and year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the updated remote total information for a given year.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Remote Total: When the remote variable input is invalid and not a positive number, or the total to increase by plus the already existing total is greater than the number of total days from the given year's start date to the latest date logged, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Reset Days Worked Remote in a Specific Location in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=remote&location=<location>&days=<remote> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
-```
-
-User = Username for user.
-
-Year = Year to reset.
-
-Location = Remote location worked to reset.
-
-Remote = Number of days to be reset to for working remotely for a given year and location. To just modify dates while keeping the remote total the same, have Remote be the same as the already existing remote total. 
-
-Startdate = OPTIONAL month and day to reset start date for the given year.
-
-Lastdate = OPTIONAL month and day to reset last date for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the reset remote total information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Office Total: When the remote variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing remote total, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-# Vacation
-
-The vacation for each year refers to the number of vacation days used during a calendar year.
-
-```
-{
-	"vacation":	Integer,
-	"startdate":	Date,
-	"lastdate":	Date
-}
-```
-
-## View Vacation Days Used in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=vacation
-```
-
-User = Username for user.
-
-Year = Year to view.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the vacation information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Update Vacation Days Used in Current Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=vacation&days=<vacation> -X POST
-```
-
-User = Username for user.
-
-Year = Year to update.
-
-Vacation = Number of days to be added to the already existing vacation total for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the updated vacation total information for a given year.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Vacation Total: When the vacation variable input is invalid and not a positive number, or the total to increase by plus the already existing total is greater than the number of total days from the given year's start date to the latest date logged, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Reset Vacation Days in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=vacation&days=<vacation> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
-```
-
-User = Username for user.
-
-Year = Year to reset.
-
-Vacation = Number of days to be reset to for vacation for a given year. To just modify dates while keeping the vacation total the same, have Vacation be the same as the already existing vacation total. 
-
-Startdate = OPTIONAL month and day to reset start date for the given year.
-
-Lastdate = OPTIONAL month and day to reset last date for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the reset vacation total information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Office Total: When the vacation variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-# Holidays
-
-The holidays for each year refers to the number of holidays used during a calendar year.
-
-```
-{
-	"holidays":	Integer,
-	"startdate":	Date,
-	"lastdate":	Date
-}
-```
-
-## View Holidays in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=holidays
-```
-
-User = Username for user.
-
-Year = Year to view.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the holiday information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Update Holidays in Current Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=holidays&days=<holidays> -X POST
-```
-
-User = Username for user.
-
-Year = Year to update.
-
-Holidays = Number of days to be added to the already existing holiday total for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the updated holiday total information for a given year.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Holiday Total: When the holidays variable input is invalid and not a positive number, or the total to increase by plus the already existing total is greater than the number of total days from the given year's start date to the latest date logged, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Reset Holidays in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=holidays&days=<holidays> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
-```
-
-User = Username for user.
-
-Year = Year to reset.
-
-Holidays = Number of days to be reset to for holidays for a given year. To just modify dates while keeping the holidays total the same, have Holidays be the same as the already existing holidays total. 
-
-Startdate = OPTIONAL month and day to reset start date for the given year.
-
-Lastdate = OPTIONAL month and day to reset last date for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the reset holiday total information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Office Total: When the holidays variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-# Sick
-
-The sick for each year refers to the number of sick days used during a calendar year.
-
-```
-{
-	"sick":	Integer,
-	"startdate":	Date,
-	"lastdate":	Date
-}
-```
-
-## View Sick Days Used in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=sick
-```
-
-User = Username for user.
-
-Year = Year to view.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the sick information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Update Sick Days Used in Current Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=sick&days=<sick> -X POST
-```
-
-User = Username for user.
-
-Year = Year to update.
-
-Sick = Number of days to be added to the already existing sick days total for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the updated sick days total information for a given year.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Sick Days Total: When the sick variable input is invalid and not a positive number, or the total to increase by plus the already existing total is greater than the number of total days from the given year's start date to the latest date logged, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
-
-## Reset Sick Days Used in a Given Year
-
-__Command__
-
-```
-curl http://localhost:5000/api/v1/user/<user>?year=<year>&type=sick&days=<sick> -H "Content-Type: application/json" -X PUT -d '{"startdate": {"month": "<month>","day": "<day>"},"lastdate": {"month": "<month>","day": "<day>"}}'
-```
-
-User = Username for user.
-
-Year = Year to reset.
-
-Sick = Number of days to be reset to for sick days for a given year. To just modify dates while keeping the sick total the same, have Sick be the same as the already existing sick total. 
-
-Startdate = OPTIONAL month and day to reset start date for the given year.
-
-Lastdate = OPTIONAL month and day to reset last date for the given year.
-
-__Response__
-
-Success: The response is a 200 status code. The response body is a JSON object containing the reset sick days total information for a given year.
-
-No Year Found: When there is no document for the year specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
-
-Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
-
-Invalid Sick Days Total: When the sick variable input is invalid and not a postive number, or the reset value is greater than or equal to the existing vacation total, the response is a 400 status code. The response body is a JSON object containing an error.
-
-Invalid Dates: When the startdate comes after the lastdate or the month and day parameters are not valid integers, the response is a 400 status code. The response body is a JSON object containing an error message.
+No Date Data Deleted: When there is no date query parameter specified or no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.

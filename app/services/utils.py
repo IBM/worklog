@@ -52,60 +52,90 @@ def getUserWorklog(user):
 
 def getUserYearData(user,year):
     userData = getUserWorklog(user)
-        
-    userYearData = None
-    for yearData in userData:
-        if yearData["year"] == year:
-            userYearData = yearData 
+    
+    if userData:
+        for yearData in userData:
+            if yearData["year"] == year:
+                return yearData 
             
-    return userYearData
+    return None
 
-def updateUserWorkLog(user,year,updatedData):
+def getUserDateData(user,date):
+    userYearData = getUserYearData(user, date.year)
+    
+    if userYearData:
+        for dateData in userYearData["entries"]:
+            if datetime.date.fromisoformat(dateData["date"]) == date:
+                return dateData
+        
+    return None
+
+def updateUserWorkLog(user,date,dayType,location):
     userCred = getUserCredentials(user)
                     
-    data = {}
-    for key in updatedData.keys():
-        data["years.$."+key] = updatedData[key]           
+    entry = {"date": date.isoformat(),
+             "type": dayType}
+        
+    if dayType == "remote":
+        entry["location"] = location        
     
-    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
-                                {"$set": data},
-                                upsert=True)
+    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":date.year},
+                                {"$set": {"years.$.entries.$[entry]": entry}},
+                                array_filters=[{"entry.date": date.isoformat()}])
     
-def addUserWorkLogData(user, year, dayType, days, location, startdate, lastdate):
+def addUserWorkLogData(user,date,dayType,location):
     userCred = mongoCredentials.db.credentials.find_one({"username": user})
     
-    year = {"year": year,
-            "startdate" : startdate,
-            "lastdate" : lastdate,
-            "office" : 0,
-            "remote" : {
-                "total" : 0,
-                "locations" : {}
-            },
-            "vacation" : 0,
-            "holidays" : 0,
-            "sick" : 0}
+    hasYearData = getUserYearData(user, date.year)
     
+    entry = {"date": date.isoformat(),
+             "type": dayType}
+        
     if dayType == "remote":
-        year[dayType]["total"] = days
-        year[dayType]["locations"] = {location:days}
+        entry["location"] = location
+    
+    if hasYearData:
+        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":date.year},
+                                    {"$push": {"years.$.entries": entry}},
+                                    upsert=True)
     else:
-        year[dayType] = days
+        year = {"year": date.year,
+                "entries": [entry]}
+        
+        mongoLog.db.log.update_one({"_id": userCred["user_id"]},
+                                    {"$addToSet": {"years": year}},
+                                    upsert=True)
+
+def deleteUserDateData(user, date):        
+    userCred = mongoCredentials.db.credentials.find_one({"username": user})
+    
+    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":date.year},
+                                {"$pull": {"years.$.entries": {"date": date.isoformat()}}})
+    
+    yearData = getUserYearData(user, date.year)
+    
+    if len(yearData["entries"]) == 0:
+        mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":date.year},
+                                   {"$pull": {"years": {"year": date.year}}})
+        
+def deleteUser(user):
+    userCred = mongoCredentials.db.credentials.find_one({"username": user})
+    
+    logResult = mongoLog.db.log.delete_one({"_id": userCred["user_id"]})
+    
+    credentialsResult = mongoCredentials.db.credentials.delete_one({"username": user})
+    
+    return logResult.deleted_count == 1 and credentialsResult.deleted_count == 1
+    
+def deleteUserData(user):
+    userCred = mongoCredentials.db.credentials.find_one({"username": user})
     
     mongoLog.db.log.update_one({"_id": userCred["user_id"]},
-                                {"$addToSet": {"years": year}},
-                                upsert=True)
-
-def getYearDates(year):
-    lastdate = datetime.datetime.utcnow()
-    if year < lastdate.year:
-        startdate = datetime.datetime(year,1,1)
-        lastdate = datetime.datetime(year,12,31)
-    elif year > lastdate.year:
-        startdate = datetime.datetime(year,1,1)
-        lastdate = startdate
-    else:
-        startdate = lastdate
-        
-    return (startdate,lastdate)
+                                {"$set": {"years": []}})
+    
+def deleteUserYearData(user, year):
+    userCred = mongoCredentials.db.credentials.find_one({"username": user})
+    
+    mongoLog.db.log.update_one({"_id": userCred["user_id"],"years.year":year},
+                                   {"$pull": {"years": {"year": year}}})
         

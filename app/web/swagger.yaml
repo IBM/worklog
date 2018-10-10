@@ -7,7 +7,7 @@ info:
     email: "maxshapiro32@ibm.com"
   license:
     name: "Apache 2.0"
-    url: "https://github.com/IBM/worklog"
+    url: "https://github.com/IBM/worklog/blob/master/LICENSE"
 host: "localhost:5000"
 basePath: "/api/v1"
 tags:
@@ -95,8 +95,6 @@ paths:
       - "Users"
       summary: "Get work log data about a user"
       description: ""
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
       parameters:
@@ -106,20 +104,9 @@ paths:
         description: "The username associated with a user's account"
         type: "string"
       - in: "query"
-        name: "year"
-        description: "Year to get associated work log data"
-        type: "integer"
-      - in: "query"
-        name: "type"
-        description: "The specific type of day data"
+        name: "date"
+        description: "Date to get associated work log data. Follows the format 'YYYY-MM-DD'"
         type: "string"
-        enum:
-        - "office"
-        - "remote"
-        - "vacation"
-        - "holidays"
-        - "sick"
-        - "total"
       responses:
         200:
           description: "Successfully got requested work log data"
@@ -132,11 +119,9 @@ paths:
     post:
       tags:
       - "Users"
-      summary: "Add work log data"
+      summary: "Add work log data for a user"
       description: ""
       operationId: "handleUserData"
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
       parameters:
@@ -146,10 +131,10 @@ paths:
         description: "The username associated with a user's account"
         type: "string"
       - in: "query"
-        name: "year"
+        name: "date"
         required: True
-        description: "Year to get associated work log data"
-        type: "integer"
+        description: "Date to add work log data for. Follows the format 'YYYY-MM-DD'"
+        type: "string"
       - in: "query"
         name: "type"
         required: True
@@ -161,12 +146,6 @@ paths:
         - "vacation"
         - "holidays"
         - "sick"
-        - "total"
-      - in: "query"
-        name: "days"
-        required: True
-        description: "Number of days to add to day type for a given year"
-        type: "integer"
       - in: "query"
         name: "location"
         description: "Location of remote work. Only required when type=remote"
@@ -181,10 +160,8 @@ paths:
     put:
       tags:
       - "Users"
-      summary: "Reset work log data"
+      summary: "Update work log data for a user"
       description: ""
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
       parameters:
@@ -194,10 +171,10 @@ paths:
         description: "The username associated with a user's account"
         type: "string"
       - in: "query"
-        name: "year"
+        name: "date"
         required: True
-        description: "Year to get associated work log data"
-        type: "integer"
+        description: "Date to update associated work log data. Follows the format 'YYYY-MM-DD'"
+        type: "string"
       - in: "query"
         name: "type"
         required: True
@@ -209,30 +186,61 @@ paths:
         - "vacation"
         - "holidays"
         - "sick"
-        - "total"
-      - in: "query"
-        name: "days"
-        required: True
-        description: "Number of days to reset the day type to for a given year"
-        type: "integer"
       - in: "query"
         name: "location"
         description: "Location of remote work. Only required when type=remote"
         type: "string"
-      - in: "body"
-        name: "data"
-        description: "startdate and lastdate associated with a given year"
-        schema:
-          $ref: "#/definitions/Dates"
       responses:
         200:
-          description: "Successfully reset work log data"
+          description: "Successfully updated work log data"
         400:
           description: "Invalid parameters given"
         403:
           description: "Not logged in"
         404:
           description: "No work log data found"
+    delete:
+      tags:
+      - "Users"
+      summary: "Delete a user or work log data for a user"
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "username"
+        required: True
+        description: "The username associated with a user's account"
+        type: "string"
+      - in: "query"
+        name: "date"
+        description: "Date to delete associated work log data. Follows the format 'YYYY-MM-DD'"
+        type: "string"
+      - in: "query"
+        name: "year"
+        description: "Year to delete associated work log data. Requires deleteyear=true"
+        type: "integer"
+      - in: "query"
+        name: "deleteuser"
+        description: "Boolean to determine if the user should be deleted"
+        type: "boolean"
+      - in: "query"
+        name: "deleteall"
+        description: "Boolean to determine if the all the user's work log data should be deleted"
+        type: "boolean"
+      - in: "query"
+        name: "deleteyear"
+        description: "Boolean to determine if the user's work log year data should be deleted. Requires year query parameter"
+        type: "boolean"
+      responses:
+        200:
+          description: "Successfully deleted work log data or user"
+        400:
+          description: "Invalid parameters given"
+        403:
+          description: "Not logged in"
+        404:
+          description: "No work log data or user to delete"
 definitions:
   Credentials:
     type: "object"
@@ -250,24 +258,3 @@ definitions:
         type: "string"
       new_password:
         type: "string"
-  Dates:
-    type: "object"
-    properties:
-      startdate:
-        type: "object"
-        properties:
-          month:
-            type: "integer"
-            enum: [1,2,3,4,5,6,7,8,9,10,11,12]
-          day:
-            type: "integer"
-            enum: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
-      lastdate:
-        type: "object"
-        properties:
-          month:
-            type: "integer"
-            enum: [1,2,3,4,5,6,7,8,9,10,11,12]
-          day:
-            type: "integer"
-            enum: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]

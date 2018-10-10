@@ -21,8 +21,8 @@ This file contains ideas for future additions and enhancements to this applicati
 
 * Database credentials/Auth
 
-* Delete data
-
 * Persistant data for database in Docker container
 
 * Slack integration
+
+* Create Admin User
