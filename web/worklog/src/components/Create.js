@@ -49,8 +49,8 @@ class Create extends React.Component {
 										<Input invalid={this.props.state.invalidCreate} type="password" value={this.state.passwordConfirm} onChange={e => this.setState({passwordConfirm: e.target.value})}/>
 										<FormFeedback>Invalid credentials</FormFeedback>
 									</FormGroup>
-									<NavLink to="/" ><Button color="danger" className="float-left">Cancel</Button></NavLink>
 									<Button type="submit" color="primary" className="float-right">Create</Button>
+									<NavLink to="/" ><Button color="danger" className="float-left">Cancel</Button></NavLink>
 								</Form>
 							</CardBody>
 						</Card>

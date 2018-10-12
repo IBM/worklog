@@ -1,9 +1,15 @@
 import React from "react";
 import {Doughnut} from "react-chartjs-2";
-import { Button, Modal, ModalHeader, ModalBody, Card, CardTitle, CardBody, CardHeader, Form, FormGroup, FormFeedback, Label, Input, Container, Row, Col } from 'reactstrap';
-import {PacmanLoader} from "react-spinners";
+import { Button, Alert, Card, CardTitle, CardBody, CardHeader, Form, FormGroup, Label, Input, Container, Row, Col, Nav, NavItem, NavLink, TabContent, TabPane, Modal, ModalBody, ModalHeader } from 'reactstrap';
+import BigCalendar from 'react-big-calendar';
+import moment from 'moment';
+import classnames from 'classnames';
+
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const API_BASE_URL = process.env.REACT_APP_APP_SERVER;
+
+const localizer = BigCalendar.momentLocalizer(moment);
 
 function getRandomColor(length) {
 	var result = [];
@@ -16,6 +22,15 @@ function getRandomColor(length) {
     	result.push(color+'0.6)');
     }
     return result;
+}
+
+function getIndex(value, arr) {
+	for(var i = 0; i < arr.length; i++) {
+        if(arr[i] === value) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 class Dashboard extends React.Component {
@@ -33,29 +48,29 @@ class Dashboard extends React.Component {
 
 		this.state = {
 			session: session,
-			addDayType: "office",
-			addDaysValue: 1,
-			addLocationValue: "",
-			addYearValue: new Date().getFullYear(),
-			editDayType: "office",
-			editDayValue: 0,
-			editLocationValue: "",
-			editStartDateMonth: undefined,
-			editStartDateDay: undefined,
-			editLastDateMonth: undefined,
-			editLastDateDay: undefined,
-			isAddRemote: false,
-			isEditRemote: false,
+			data: undefined,
+			hasRemote: false,
+			activeTab: '1',
+			startdate: new Date(),
+			lastdate: new Date(),
+			modifyEventDate: "2000-01-01",
+			dayType: "office",
+			locationValue: "",
+			addEventsDates: [new Date()],
+			isRemote: false,
 			addError: false,
-			editError: false,
-			clicked: "Office",
-			modal: false,
+			updateError: false,
+			deleteError: false,
+			selectionError: false,
+			eventModal: false,
+			addModal: false,
+			events: [],
 			charData:{
 				datasets: [{
     				data: [1,1,1,1,1],
     				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)','rgba(0,255,0,0.6)','rgba(255,165,0,0.6)','rgba(255,0,0,0.6)']
     				}],
-    			labels: ['Office','Remote','Vacation','Holidays','Sick']
+    			labels: ['Office','Remote','Vacation','Holiday','Sick']
 			},
 			remoteCharData:{
 				datasets: [{
@@ -70,8 +85,11 @@ class Dashboard extends React.Component {
 			this.getData();
 		}
 
-		this.handleChange = this.handleChange.bind(this);
-		this.toggle = this.toggle.bind(this);
+		this.handleDayType = this.handleDayType.bind(this);
+		this.toggleEventModal = this.toggleEventModal.bind(this);
+		this.toggleAddModal = this.toggleAddModal.bind(this);
+		this.toggleTab = this.toggleTab.bind(this);
+		this.onDismiss = this.onDismiss.bind(this);
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -83,41 +101,121 @@ class Dashboard extends React.Component {
 	getData = async (e) => {
 	    if(e) e.preventDefault();
 
-	    this.props.updateLoading();
-
 	    const response = await fetch(API_BASE_URL+'/api/v1/user/'+sessionStorage.getItem("user"));
-	    const data = await response.json();
+	    var data = await response.json();
 	    if ("error" in data) {
 	    	if (data["error"] === "Not logged in") {
 	    		this.setState({session: false});
+	    	} else if (data["error"] === "No data found") {
+	    		this.setState({data: undefined,
+	    						events: [],
+	    						currentIndex: 0,
+	    						charData:{
+									datasets: [{
+					    				data: [1,1,1,1,1],
+					    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)','rgba(0,255,0,0.6)','rgba(255,165,0,0.6)','rgba(255,0,0,0.6)']
+					    				}],
+					    			labels: ['Office','Remote','Vacation','Holiday','Sick']
+								},
+								remoteCharData:{
+									datasets: [{
+					    				data: [1,1],
+					    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)']
+					    				}],
+					    			labels: ['United States','Canada']
+								}});
 	    	}
 	    } else {
+	    	data = data["years"];
 		    data.sort(function(a,b){
 		    	return a.year > b.year;
 		    })
 
+		    var events = [];
+
+		    for (var i = 0; i < data.length; i++) {
+		    	for (var j = 0; j < data[i].entries.length; j++) {
+		    		var tempdate = new Date(data[i].entries[j].date);
+		    		tempdate.setDate(tempdate.getDate()+1);
+		    		var title = data[i].entries[j].type;
+
+		    		if (title === "remote") {
+		    			title = title + ": " + data[i].entries[j].location
+		    		} 
+
+		    		var event = {title: title,
+							   	start: tempdate,
+							   	end: tempdate,
+							   	allDay: true
+							   	}
+					events.push(event);
+		    	}
+		    }
+
 		    var remoteData = [];
 		    var remoteLabels = [];
+		    var office = 0;
+		    var remote = 0;
+		    var vacation = 0;
+		    var holiday = 0;
+		    var sick = 0;
+		    var hasRemote = false;
+		    var startdate = new Date();
+		    var lastdate = new Date();
 
-		    for (var location in data[data.length-1].remote.locations) {
+		    for (i = 0; i < data[data.length-1].entries.length; i++) {
+		    	if (i === 0) {
+		    		startdate = new Date(data[data.length-1].entries[i].date);
+		    		lastdate = new Date(data[data.length-1].entries[i].date);
+		    	} else {
+		    		tempdate = new Date(data[data.length-1].entries[i].date);
+		    		if (tempdate < startdate) {
+		    			startdate = tempdate;
+		    		}
+		    		if (tempdate > lastdate) {
+		    			lastdate = tempdate;
+		    		}
+		    	}
 
-	   			if ( ! data[data.length-1].remote.locations.hasOwnProperty(location)) {
-	      			continue;
+	   			if (data[data.length-1].entries[i].hasOwnProperty("location")) {
+		      		var index = getIndex(data[data.length-1].entries[i].location,remoteLabels);
+
+		   			if (index === -1) {
+		   				remoteLabels.push(data[data.length-1].entries[i].location);
+		   				remoteData.push(1);
+		   			} else {
+		   				remoteData[index] = remoteData[index] + 1;
+		   			}
+
+		   			remote = remote + 1;
+		   			hasRemote = true;
+	   			} else if (data[data.length-1].entries[i].type === "office") {
+	   				office = office + 1;
+	   			} else if (data[data.length-1].entries[i].type === "vacation") {
+	   				vacation = vacation + 1;
+	   			} else if (data[data.length-1].entries[i].type === "holiday") {
+	   				holiday = holiday + 1;
+	   			} else if (data[data.length-1].entries[i].type === "sick") {
+	   				sick = sick + 1;
 	   			}
-
-	   			remoteLabels.push(location);
-	   			remoteData.push(data[data.length-1].remote.locations[location]);
 			}
 
-		    this.setState({currentIndex: data.length-1, 
+			startdate.setDate(startdate.getDate()+1);
+			lastdate.setDate(lastdate.getDate()+1);
+
+		    this.setState({currentIndex: data.length-1,
+		    				hasRemote: hasRemote, 
+		    				startdate: startdate,
+		    				lastdate: lastdate,
+		    				events: events,
 		    				data: data,
 		    				charData:{
 								datasets: [{
-				    				data: [data[data.length-1].office,
-		    								data[data.length-1].remote.total,
-		    								data[data.length-1].vacation,
-		    								data[data.length-1].holidays,
-		    								data[data.length-1].sick],
+				    				data: [office,
+		    								remote,
+		    								vacation,
+		    								holiday,
+		    								sick],
 				    				backgroundColor: this.state.charData.datasets[0].backgroundColor
 				    				}],
 				    			labels: this.state.charData.labels
@@ -130,18 +228,22 @@ class Dashboard extends React.Component {
 				    			labels: remoteLabels
 				    		}})
 		}
-		this.props.updateLoading();
   	}
 
   	exportData = (e) => {
   		if(e) e.preventDefault();
 
-  		var allData = ["Year,Office,Remote,Vacation,Holidays,Sick"];
+  		var allData = ["Date,Type,Location"];
 
-	    this.state.data.map(function(year,i){
-	    	allData.push([year.year,year.office,year.remote.total,year.vacation,year.holidays,year.sick].join(","));
-	    	return undefined;
-	    })
+  		for (var i = 0; i < this.state.data.length; i++) {
+  			for (var j = 0; j < this.state.data[i].entries.length; j++) {
+  				if (this.state.data[i].entries[j].hasOwnProperty("location")) {
+  					allData.push([this.state.data[i].entries[j].date,this.state.data[i].entries[j].type,this.state.data[i].entries[j].location].join(","));
+  				} else {
+  					allData.push([this.state.data[i].entries[j].date,this.state.data[i].entries[j].type,""].join(","));
+  				}
+  			}
+  		}
 
 	    var csvFile = new Blob([allData.join("\n")], {type: "text/csv"});
 
@@ -161,131 +263,85 @@ class Dashboard extends React.Component {
   	addDays = async (e) => {
   		if(e) e.preventDefault();
 
-  		this.props.updateLoading();
+  		this.toggleAddModal(e);
 
-  		const response = await fetch(API_BASE_URL+'/api/v1/user/'
-  									+sessionStorage.getItem("user")
-  									+'?year='+this.state.addYearValue
-  									+'&type='+this.state.addDayType
-  									+'&days='+this.state.addDaysValue
-  									+'&location='+this.state.addLocationValue,{
-      		method: "POST",
-      		headers: {
-        		"Content-Type": "application/json"
-      		}
-    	});
+  		this.setState({addError: false});
 
-    	const status = await response.status;
+  		var response;
+  		var status;
 
-    	if (status === 200) {
-    		this.setState({addError: false});
-    		this.getData();
-    	} else if (status === 400) {
-    		this.setState({addError: true});
-    	} else if (status === 403) {
-    		this.setState({session: false});
+  		for (var i = 0; i < this.state.addEventsDates.length; i++) {
+	  		response = await fetch(API_BASE_URL+'/api/v1/user/'
+	  								+sessionStorage.getItem("user")
+	  								+'?date='+this.state.addEventsDates[i].toISOString().substring(0,10)
+	  								+'&type='+this.state.dayType
+	  								+'&location='+this.state.locationValue,{
+	      		method: "POST"
+	    	});
+
+	    	status = await response.status;
+
+	    	if (status === 400) {
+	    		this.setState({addError: true});
+	    	} else if (status === 403) {
+	    		this.setState({session: false});
+	    		break;
+	    	}
     	}
 
-    	this.props.updateLoading();
+    	if (this.state.session) {
+    		this.getData();
+    	}
   	}
 
-  	editDays = async (e) => {
+  	updateEvent = async (e) => {
   		if(e) e.preventDefault();
 
-  		this.toggle();
-
-  		var body = {};
-  		var days = this.state.editDayValue;
-
-  		if (this.state.editStartDateMonth && this.state.editStartDateDay) {
-  			body["startdate"] = {month: parseInt(this.state.editStartDateMonth, 10),
-  								day: parseInt(this.state.editStartDateDay, 10)}
-  		}
-
-  		if (this.state.editLastDateMonth && this.state.editLastDateDay) {
-  			body["lastdate"] = {month: parseInt(this.state.editLastDateMonth, 10),
-  								day: parseInt(this.state.editLastDateDay, 10)}
-  		}
-
-  		if (!days) {
-  			if (this.state.editDayType === "remote" && this.state.editLocationValue) {
-  				days = this.state.data[this.state.currentIndex][this.state.editDayType][this.state.editLocationValue];
-  			} else {
-  				days = this.state.data[this.state.currentIndex][this.state.editDayType];
-  			}
-  		}
-
-  		this.props.updateLoading();
+  		this.toggleEventModal(e);
 
   		const response = await fetch(API_BASE_URL+'/api/v1/user/'
   									+sessionStorage.getItem("user")
-  									+'?year='+this.state.data[this.state.currentIndex].year
-  									+'&type='+this.state.editDayType
-  									+'&days='+days
-  									+'&location='+this.state.editLocationValue,{
-      		method: "PUT",
-      		headers: {
-        		"Content-Type": "application/json"
-      		},
-      		body: JSON.stringify(body)
+  									+'?date='+this.state.modifyEventDate
+  									+'&type='+this.state.dayType
+  									+'&location='+this.state.locationValue,{
+      		method: "PUT"
     	});
 
     	const status = await response.status;
 
     	if (status === 200) {
-    		this.setState({editError: false});
+    		this.setState({updateError: false});
     		this.getData();
     	} else if (status === 400) {
-    		this.setState({editError: true});
+    		this.setState({updateError: true});
     	} else if (status === 403) {
     		this.setState({session: false});
     	}
-
-    	this.props.updateLoading();
     	
   	}
 
-  	clickChart = (clickedDay) => {
-  		if (clickedDay.length > 0) {
-	  		var dayType = clickedDay[0]._model.label.toLowerCase();
+  	deleteEvent = async (e) => {
+  		if(e) e.preventDefault();
 
-	  		var startSplit = this.state.data[this.state.currentIndex].startdate.split(" ");
-	  		var lastSplit = this.state.data[this.state.currentIndex].lastdate.split(" ");
+  		this.toggleEventModal(e);
 
-	  		var tempStartDate = new Date(startSplit[1] + ' ' + startSplit[2] + ' ' + startSplit[3]);
-	  		var tempLastDate = new Date(lastSplit[1] + ' ' + lastSplit[2] + ' ' + lastSplit[3]);
+  		const response = await fetch(API_BASE_URL+'/api/v1/user/'
+  									+sessionStorage.getItem("user")
+  									+'?date='+this.state.modifyEventDate,{
+      		method: "DELETE"
+    	});
 
-	  		var dayValue = 0;
-	  		var isRemote = false;
+    	const status = await response.status;
 
-	  		var location = "";
-
-	  		if (clickedDay[0]._model.label in this.state.data[this.state.currentIndex].remote.locations) {
-	  			dayType = "remote";
-	  			location = clickedDay[0]._model.label;
-	  		}
-
-	  		if (dayType === "remote") {
-	  			if (location === "") {
-	  				location = this.state.remoteCharData.labels[0];
-	  			}
-	  			dayValue = this.state.data[this.state.currentIndex][dayType].locations[location];
-	  			isRemote = true;
-	  		} else {
-	  			dayValue = this.state.data[this.state.currentIndex][dayType];
-	  			isRemote = false;
-	  		}
-	  		this.setState({editDayType: dayType,
-	  						editDayValue: dayValue,
-	  						isEditRemote: isRemote,
-	  						editStartDateMonth: tempStartDate.getMonth()+1,
-	  						editStartDateDay: tempStartDate.getDate(),
-	  						editLastDateMonth: tempLastDate.getMonth()+1,
-	  						editLastDateDay: tempLastDate.getDate(),
-	  						editLocationValue: location});
-
-	  		this.toggle();
-  		}
+    	if (status === 200) {
+    		this.setState({deleteError: false});
+    		this.getData();
+    	} else if (status === 400) {
+    		this.setState({deleteError: true});
+    	} else if (status === 403) {
+    		this.setState({session: false});
+    	}
+    	
   	}
 
   	next = (e) => {
@@ -293,25 +349,66 @@ class Dashboard extends React.Component {
 
   		var remoteData = [];
 	    var remoteLabels = [];
+	    var office = 0;
+		var remote = 0;
+		var vacation = 0;
+		var holiday = 0;
+		var sick = 0;
+		var hasRemote = false;
+		var startdate = new Date();
+		var lastdate = new Date();
 
-	    for (var location in this.state.data[this.state.currentIndex+1].remote.locations) {
+		for (var i = 0; i < this.state.data[this.state.currentIndex+1].entries.length; i++) {
+		    if (i === 0) {
+		    	startdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
+		    	lastdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
+		    } else {
+		    	var tempdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
+		    	if (tempdate < startdate) {
+		    		startdate = tempdate;
+		    	}
+		    	if (tempdate > lastdate) {
+		    		lastdate = tempdate;
+		    	}
+		    }
 
-   			if ( ! this.state.data[this.state.currentIndex+1].remote.locations.hasOwnProperty(location)) {
-      			continue;
-   			}
+	   		if (this.state.data[this.state.currentIndex+1].entries[i].hasOwnProperty("location")) {
+		      	var index = getIndex(this.state.data[this.state.currentIndex+1].entries[i].location,remoteLabels);
 
-   			remoteLabels.push(location);
-   			remoteData.push(this.state.data[this.state.currentIndex+1].remote.locations[location]);
+		   		if (index === -1) {
+		   			remoteLabels.push(this.state.data[this.state.currentIndex+1].entries[i].location);
+		   			remoteData.push(1);
+		   		} else {
+		   			remoteData[index] = remoteData[index] + 1;
+		   		}
+
+		   		remote = remote + 1;
+		   		hasRemote = true;
+	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "office") {
+	   			office = office + 1;
+	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "vacation") {
+	   			vacation = vacation + 1;
+	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "holiday") {
+	   			holiday = holiday + 1;
+	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "sick") {
+	   			sick = sick + 1;
+	   		}
 		}
 
+		startdate.setDate(startdate.getDate()+1);
+		lastdate.setDate(lastdate.getDate()+1);
+
   		this.setState({currentIndex: this.state.currentIndex+1,
+  						hasRemote: hasRemote,
+  						startdate: startdate,
+  						lastdate: lastdate,
   						charData:{
 							datasets: [{
-			    				data: [this.state.data[this.state.currentIndex+1].office,
-	    								this.state.data[this.state.currentIndex+1].remote.total,
-	    								this.state.data[this.state.currentIndex+1].vacation,
-	    								this.state.data[this.state.currentIndex+1].holidays,
-	    								this.state.data[this.state.currentIndex+1].sick],
+			    				data: [office,
+	    								remote,
+	    								vacation,
+	    								holiday,
+	    								sick],
 			    				backgroundColor: this.state.charData.datasets[0].backgroundColor
 			    				}],
 			    			labels: this.state.charData.labels
@@ -330,25 +427,66 @@ class Dashboard extends React.Component {
 
   		var remoteData = [];
 	    var remoteLabels = [];
+	    var office = 0;
+		var remote = 0;
+		var vacation = 0;
+		var holiday = 0;
+		var sick = 0;
+		var hasRemote = false;
+		var startdate = new Date();
+		var lastdate = new Date();
 
-	    for (var location in this.state.data[this.state.currentIndex-1].remote.locations) {
+		for (var i = 0; i < this.state.data[this.state.currentIndex-1].entries.length; i++) {
+		    if (i === 0) {
+		    	startdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
+		    	lastdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
+		    } else {
+		    	var tempdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
+		    	if (tempdate < startdate) {
+		    		startdate = tempdate;
+		    	}
+		    	if (tempdate > lastdate) {
+		    		lastdate = tempdate;
+		    	}
+		    }
 
-   			if ( ! this.state.data[this.state.currentIndex-1].remote.locations.hasOwnProperty(location)) {
-      			continue;
-   			}
+	   		if (this.state.data[this.state.currentIndex-1].entries[i].hasOwnProperty("location")) {
+		      	var index = getIndex(this.state.data[this.state.currentIndex-1].entries[i].location,remoteLabels);
 
-   			remoteLabels.push(location);
-   			remoteData.push(this.state.data[this.state.currentIndex-1].remote.locations[location]);
+		   		if (index === -1) {
+		   			remoteLabels.push(this.state.data[this.state.currentIndex-1].entries[i].location);
+		   			remoteData.push(1);
+		   		} else {
+		   			remoteData[index] = remoteData[index] + 1;
+		   		}
+
+		   		remote = remote + 1;
+		   		hasRemote = true;
+	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "office") {
+	   			office = office + 1;
+	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "vacation") {
+	   			vacation = vacation + 1;
+	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "holiday") {
+	   			holiday = holiday + 1;
+	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "sick") {
+	   			sick = sick + 1;
+	   		}
 		}
 
+		startdate.setDate(startdate.getDate()+1);
+		lastdate.setDate(lastdate.getDate()+1);
+
   		this.setState({currentIndex: this.state.currentIndex-1,
+  						hasRemote: hasRemote,
+  						startdate: startdate,
+  						lastdate: lastdate,
   						charData:{
 							datasets: [{
-			    				data: [this.state.data[this.state.currentIndex-1].office,
-	    								this.state.data[this.state.currentIndex-1].remote.total,
-	    								this.state.data[this.state.currentIndex-1].vacation,
-	    								this.state.data[this.state.currentIndex-1].holidays,
-	    								this.state.data[this.state.currentIndex-1].sick],
+			    				data: [office,
+	    								remote,
+	    								vacation,
+	    								holiday,
+	    								sick],
 			    				backgroundColor: this.state.charData.datasets[0].backgroundColor
 			    				}],
 			    			labels: this.state.charData.labels
@@ -368,199 +506,268 @@ class Dashboard extends React.Component {
   		this.setState({session: false});
   	}
 
-  	handleChange(e) {
+  	toggleTab(tab) {
+    	if (this.state.activeTab !== tab) {
+      		this.setState({
+       			activeTab: tab
+     		});
+    	}
+  	}
+
+  	onDismiss() {
+    	this.setState({ selectionError: false,
+    					addError: false,
+    					updateError: false,
+    					deleteError: false
+    					});
+  	}
+
+  	toggleEventModal(e) {
+
+  		if (e.hasOwnProperty("title")) {
+  			if (e.title.indexOf("remote") >= 0) {
+  				this.setState({
+	  				dayType: "remote",
+	  				isRemote: true,
+	  				locationValue: e.title.substring(8,e.title.length),
+	  				selectionError: false,
+	      			eventModal: !this.state.eventModal
+	    		});
+  			} else {
+	  			this.setState({
+	  				dayType: e.title,
+	  				isRemote: false,
+	  				locationValue: "",
+	  				selectionError: false,
+	      			eventModal: !this.state.eventModal
+	    		});
+  			}
+  		} else {
+    		this.setState({
+    			selectionError: false,
+      			eventModal: !this.state.eventModal
+    		});
+    	}
+
+    	if (e.hasOwnProperty("start")) {
+    		var updatedDay = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate());
+    		var dateString = updatedDay.toISOString().substring(0,10);
+
+    		this.setState({
+    			selectionError: false,
+    			modifyEventDate: dateString
+    		});
+    	}
+  	}
+
+  	toggleAddModal(e) {
+
+  		if (e.hasOwnProperty("start")) {
+	  		var tempdate = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate());
+	  		var invalid = false;
+
+	  		for (var i = 0; i < e.slots.length; i++) {
+	  			for (var j = 0; j < this.state.events.length; j++) {
+	  				if (tempdate.getFullYear() === this.state.events[j].start.getFullYear()
+	  					&& tempdate.getMonth() === this.state.events[j].start.getMonth()
+	  					&& tempdate.getDate() === this.state.events[j].start.getDate()) {
+	  					invalid = true;
+	  					break;
+	  				}
+	  			}
+
+	  			if (invalid) {
+	  				break;
+	  			} else {
+	  				tempdate.setDate(tempdate.getDate()+1);
+	  			}
+	  		}
+
+	  		if (invalid) {
+	  			this.setState({selectionError: true, addModal: false});
+	  		} else {
+	  			this.setState({selectionError: false, addEventsDates: e.slots, addModal: true});
+	  		}
+	  	} else {
+	  		this.setState({addModal: false});
+	  	}
+  	}
+
+  	handleDayType(e) {
   		if(e) e.preventDefault();
 
   		if (e.target.value === "remote") {
-  			this.setState({addDayType: e.target.value,
-  							isAddRemote: true});
+  			this.setState({dayType: e.target.value,
+  							isRemote: true});
   		} else {
-  			this.setState({addDayType: e.target.value,
-  							isAddRemote: false});
+  			this.setState({dayType: e.target.value,
+  							locationValue: "",
+  							isRemote: false});
   		}
   	}
 
-  	toggle() {
-    	this.setState({
-      		modal: !this.state.modal
-    	});
+  	eventSetColor(e) {
+
+  		var style = {};
+
+  		if (e.title === "office") {
+	  		style = {
+	  			backgroundColor: 'rgba(255,255,0,0.6)',
+	  			color: 'black'
+	  		};
+	  	} else if (e.title.indexOf("remote") >= 0) {
+	  		style = {
+	  			backgroundColor: 'rgba(0,0,255,0.6)',
+	  			color: 'black'
+	  		};
+	  	} else if (e.title === "vacation") {
+	  		style = {
+	  			backgroundColor: 'rgba(0,255,0,0.6)',
+	  			color: 'black'
+	  		};
+	  	} else if (e.title === "holiday") {
+	  		style = {
+	  			backgroundColor: 'rgba(255,165,0,0.6)',
+	  			color: 'black'
+	  		};
+	  	} else if (e.title === "sick") {
+	  		style = {
+	  			backgroundColor: 'rgba(255,0,0,0.6)',
+	  			color: 'black'
+	  		};
+	  	}
+  		return {
+  			style: style
+  		};
   	}
 	
 	render() {
-		if (this.state.data) {
-			return (
-				<Container>
-					<Row>
-						<Col sm={{size: 5, offset: 5}}>
-							<h1>Dashboard</h1>
-						</Col>
-						<Col>
-							<Button color="danger" onClick={this.logout} className="float-right">Logout</Button>
-						</Col>
-					</Row>
-					<Row>
-						<Col lg={{size: 12}}>
-							<Card>
-								<CardHeader>
-									<Button color="info" disabled={this.state.currentIndex === 0} onClick={this.previous} className="float-left" >&laquo; Previous</Button>
-									<Button color="info" disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} className="float-right" >Next &raquo;</Button>
-								</CardHeader>
-								<CardTitle className="text-center">{this.state.data[this.state.currentIndex].startdate} - {this.state.data[this.state.currentIndex].lastdate}</CardTitle>
-								<CardBody>
-									{this.state.data[this.state.currentIndex].remote.total > 0 ? 
-										(<Row>
-											<Col sm={{size: 6}}>
-												<Doughnut data={this.state.charData} onElementsClick={this.clickChart} />
-											</Col>
-											<Col sm={{size: 6}}>
-												<Doughnut data={this.state.remoteCharData} onElementsClick={this.clickChart} />
-											</Col>
-										</Row>) : 
-										(<Row>
-											<Col sm={{size: 6, offset: 3}}>
-												<Doughnut data={this.state.charData} onElementsClick={this.clickChart} />
-											</Col>
-										</Row>)
-									}
-									<Row>
-										<Col>
-											<Button color="primary" onClick={this.exportData} className="float-right" >Export Data</Button>
-										</Col>
-									</Row>
-								</CardBody>
-							</Card>
-						</Col>
-					</Row>
-					<Row>
-						<Col sm={{size: 6, offset: 3}}>
-							<Card>
-								<CardTitle className="text-center">Add Days</CardTitle>
-								<CardBody>
-									<Form method="post" onSubmit={this.addDays}>
-										<FormGroup>
-											<select value={this.state.addDayType} onChange={this.handleChange}>
-												<option value="office">Office</option>
-												<option value="remote">Remote</option>
-												<option value="vacation">Vacation</option>
-												<option value="Holidays">Holidays</option>
-												<option value="Sick">Sick</option>
-											</select><br/>
-										</FormGroup>
-										<FormGroup>
-											<Label>Year:</Label>
-											<Input invalid={this.state.addError} type="number" min="1900" max={new Date().getFullYear()} value={this.state.addYearValue} onChange={e => this.setState({addYearValue: e.target.value})} />
-										</FormGroup>
-										{this.state.isAddRemote ?(<FormGroup>
-											<Label>Location:</Label>
-											<Input invalid={this.state.addError} type="text" value={this.state.addLocationValue} onChange={e => this.setState({addLocationValue: e.target.value})} />
-										</FormGroup>) : ''}
-										<FormGroup>
-											<Label># of Days:</Label>
-											<Input invalid={this.state.addError} type="number" min="1" max="365" value={this.state.addDaysValue} onChange={e => this.setState({addDaysValue: e.target.value})}/>
-											<FormFeedback>Invalid parameters</FormFeedback>
-										</FormGroup>
-										<Button type="submit" color="primary" className="float-right">Add</Button>
-									</Form>
-								</CardBody>
-							</Card>
-							<PacmanLoader loading={this.props.state.loading} color='#FFFF00'/>
-						</Col>
-					</Row>
-					<Modal isOpen={this.state.modal} toggle={this.toggle}>
-						<ModalBody>
-							<ModalHeader>Edit {this.state.editDayType.charAt(0).toUpperCase() + this.state.editDayType.slice(1)} Days</ModalHeader>
-							<Form method="post" onSubmit={this.editDays}>
-								<FormGroup>
-									<h6>Start Date ({this.state.data[this.state.currentIndex].year}):</h6>
-									<FormGroup>
-										<Label>Month:</Label>
-										<Input invalid={this.state.editError} type="number" min="1" max="12" value={this.state.editStartDateMonth} onChange={e => this.setState({editStartDateMonth: e.target.value})}/>
-									</FormGroup>
-									<FormGroup>
-										<Label>Day:</Label>
-										<Input invalid={this.state.editError} type="number" min="1" max="31" value={this.state.editStartDateDay} onChange={e => this.setState({editStartDateDay: e.target.value})}/>
-									</FormGroup>
-								</FormGroup>
-								<FormGroup>
-									<h6>Last Date ({this.state.data[this.state.currentIndex].year}):</h6>
-									<FormGroup>
-										<Label>Month:</Label>
-										<Input invalid={this.state.editError} type="number" min="1" max="12" value={this.state.editLastDateMonth} onChange={e => this.setState({editLastDateMonth: e.target.value})}/>
-									</FormGroup>
-									<FormGroup>
-										<Label>Day:</Label>
-										<Input invalid={this.state.editError} type="number" min="1" max="31" value={this.state.editLastDateDay} onChange={e => this.setState({editLastDateDay: e.target.value})}/>
-									</FormGroup>
-								</FormGroup>
-								{this.state.isEditRemote ?( <FormGroup>
-									<Label>Location:</Label>
-									<Input invalid={this.state.editError} type="text" value={this.state.editLocationValue} onChange={e => this.setState({editLocationValue: e.target.value})}/>
-								</FormGroup> ) : ''}
-								<FormGroup>
-									<Label># of Days:</Label>
-									<Input invalid={this.state.editError} type="number" min="0" max={this.state.editDayValue} value={this.state.editDayValue} onChange={e => this.setState({editDayValue: e.target.value})}/>
-									<FormFeedback>Invalid parameters</FormFeedback>
-								</FormGroup>
-								<Button type="submit" color="primary" >Update</Button>
-							</Form>
-						</ModalBody>
-					</Modal>
-				</Container>
-			);
-		} else {
-			return (
-				<Container>
-					<Row>
-						<Col sm={{size: 5, offset: 5}}>
-							<h1>Dashboard</h1>
-						</Col>
-						<Col>
-							<Button color="danger" onClick={this.logout} className="float-right">Logout</Button>
-						</Col>
-					</Row>
-					<Row>
-						<Col sm={{size: 5, offset: 5}}>
-							<h4>No data to display</h4>
-						</Col>
-					</Row>
-					<Row>
-						<Col sm={{size: 6, offset: 3}}>
-							<Card>
-								<CardTitle className="text-center">Add Days</CardTitle>
-								<CardBody>
-									<Form method="post" onSubmit={this.addDays}>
-										<FormGroup>
-											<select value={this.state.addDayType} onChange={this.handleChange}>
-												<option value="office">Office</option>
-												<option value="remote">Remote</option>
-												<option value="vacation">Vacation</option>
-												<option value="Holidays">Holidays</option>
-												<option value="Sick">Sick</option>
-											</select><br/>
-										</FormGroup>
-										<FormGroup>
-											<Label>Year:</Label>
-											<Input invalid={this.state.addError} type="number" min="1900" max={new Date().getFullYear()} value={this.state.addYearValue} onChange={e => this.setState({addYearValue: e.target.value})} />
-										</FormGroup>
-										{this.state.isAddRemote ?(<FormGroup>
-											<Label>Location:</Label>
-											<Input invalid={this.state.addError} type="text" value={this.state.addLocationValue} onChange={e => this.setState({addLocationValue: e.target.value})} />
-										</FormGroup>) : ''}
-										<FormGroup>
-											<Label># of Days:</Label>
-											<Input invalid={this.state.addError} type="number" min="1" max="365" value={this.state.addDaysValue} onChange={e => this.setState({addDaysValue: e.target.value})}/>
-											<FormFeedback>Invalid parameters</FormFeedback>
-										</FormGroup>
-										<Button type="submit" color="primary" className="float-right">Add</Button>
-									</Form>
-								</CardBody>
-							</Card>
-							<PacmanLoader loading={this.props.state.loading} color='#FFFF00'/>
-						</Col>
-					</Row>
-				</Container>
-			);
-		}
+		return (
+			<Container>
+				<Row>
+					<Col sm={{size: 5, offset: 5}}>
+						<h1>Dashboard</h1>
+					</Col>
+					<Col>
+						<Button color="danger" onClick={this.logout} className="float-right">Logout</Button>
+					</Col>
+				</Row>
+				<Row>
+					<Col lg={{size: 12}}>
+						<Nav tabs>
+							<NavItem>
+								<NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggleTab('1'); }} >Calendar</NavLink>
+							</NavItem>
+							<NavItem>
+								<NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggleTab('2'); }} >Data</NavLink>
+							</NavItem>
+						</Nav>
+						<TabContent activeTab={this.state.activeTab}>
+      						<TabPane tabId="1">
+      							<Card>
+									<CardBody id="test">
+										<Alert color="danger" isOpen={this.state.selectionError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
+										<Alert color="danger" isOpen={this.state.addError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
+										<Alert color="danger" isOpen={this.state.updateError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
+										<Alert color="danger" isOpen={this.state.deleteError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
+										<BigCalendar
+								        	selectable="ignoreEvents"
+								          	localizer={localizer}
+								          	events={this.state.events}
+								          	defaultView={BigCalendar.Views.MONTH}
+								          	views={["month"]}
+								          	style={{ height: "100vh" }}
+								          	onSelectEvent={(this.toggleEventModal)}
+								          	onSelectSlot={(this.toggleAddModal)}
+								          	eventPropGetter={(this.eventSetColor)}
+										/>
+									</CardBody>
+								</Card>
+								<Modal isOpen={this.state.eventModal} toggle={this.toggleEventModal}>
+									<ModalHeader>Modify Worklog Event: {this.state.modifyEventDate}</ModalHeader>
+									<ModalBody>
+										<Form method="post" onSubmit={this.updateEvent}>
+											<FormGroup>
+												<select value={this.state.dayType} onChange={this.handleDayType}>
+													<option value="office">Office</option>
+													<option value="remote">Remote</option>
+													<option value="vacation">Vacation</option>
+													<option value="holiday">Holiday</option>
+													<option value="Sick">Sick</option>
+												</select>
+											</FormGroup>
+											{this.state.isRemote ?(<FormGroup>
+												<Label>Location:</Label>
+												<Input type="text" value={this.state.locationValue} onChange={e => this.setState({LocationValue: e.target.value})} />
+											</FormGroup>) : ''}
+									        <Button type="submit" color="primary" className="float-right">Update</Button>
+									        <Button color="warning" onClick={e => this.setState({eventModal: false})} className="float-left">Cancel</Button>
+									        <Button color="danger" onClick={this.deleteEvent} className="float-left">Delete</Button>
+										</Form>
+									</ModalBody>
+								</Modal>
+								<Modal isOpen={this.state.addModal} toggle={this.toggleAddModal}>
+									<ModalHeader>Add Worklog Event: {this.state.addEventsDates[0].toDateString()} - {this.state.addEventsDates[this.state.addEventsDates.length-1].toDateString()}</ModalHeader>
+									<ModalBody>
+										<Form method="post" onSubmit={this.addDays}>
+											<FormGroup>
+												<select value={this.state.dayType} onChange={this.handleDayType}>
+													<option value="office">Office</option>
+													<option value="remote">Remote</option>
+													<option value="vacation">Vacation</option>
+													<option value="holiday">Holiday</option>
+													<option value="Sick">Sick</option>
+												</select>
+											</FormGroup>
+											{this.state.isRemote ?(<FormGroup>
+												<Label>Location:</Label>
+												<Input type="text" value={this.state.locationValue} onChange={e => this.setState({locationValue: e.target.value})} />
+											</FormGroup>) : ''}
+									        <Button type="submit" color="primary" className="float-right">Add</Button>
+									        <Button color="warning" onClick={e => this.setState({addModal: false})} className="float-left">Cancel</Button>
+										</Form>
+									</ModalBody>
+								</Modal>
+							</TabPane>
+							<TabPane tabId="2" active={this.state.data !== undefined ? "true" : "false"} >
+								{this.state.data !== undefined ?
+									(<Card>
+										<CardHeader>
+											<Button color="info" disabled={this.state.currentIndex === 0} onClick={this.previous} className="float-left" >&laquo; Previous Year</Button>
+											<Button color="info" disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} className="float-right" >Next Year &raquo;</Button>
+										</CardHeader>
+										<CardTitle className="text-center">{this.state.startdate.toDateString()} - {this.state.lastdate.toDateString()}</CardTitle>
+										<CardBody>
+											{this.state.hasRemote ? 
+												(<Row>
+													<Col sm={{size: 6}}>
+														<Doughnut data={this.state.charData} />
+													</Col>
+													<Col sm={{size: 6}}>
+														<Doughnut data={this.state.remoteCharData} />
+													</Col>
+												</Row>) : 
+												(<Row>
+													<Col sm={{size: 6, offset: 3}}>
+														<Doughnut data={this.state.charData} />
+													</Col>
+												</Row>)
+											}
+											<Row>
+												<Col>
+													<Button color="primary" onClick={this.exportData} className="float-right" >Export All Data</Button>
+												</Col>
+											</Row>
+										</CardBody>
+									</Card>) :
+									(<h4>No data to display</h4>)
+								}
+							</TabPane>
+						</TabContent>
+					</Col>
+				</Row>
+			</Container>
+		);
 	}
 };
 

@@ -45,8 +45,8 @@ class Reset extends React.Component {
 										<Input invalid={this.props.state.invalidReset} type="password" value={this.state.newPassword} onChange={e => this.setState({newPassword: e.target.value})}/>
 										<FormFeedback>Invalid credentials</FormFeedback>
 									</FormGroup>
-									<Button onClick={this.props.redirectToLogin} color="danger" className="float-left" >Cancel</Button>
 									<Button type="submit" color="primary" className="float-right" >Reset</Button>
+									<Button onClick={this.props.redirectToLogin} color="danger" className="float-left" >Cancel</Button>
 								</Form>
 							</CardBody>
 						</Card>

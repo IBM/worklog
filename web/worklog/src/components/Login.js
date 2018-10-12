@@ -39,9 +39,9 @@ class Login extends React.Component {
 										<Input invalid={this.props.state.invalidLogin} type="password" value={this.state.password} onChange={e => this.setState({password: e.target.value})}/>
 										<FormFeedback>Invalid credentials</FormFeedback>
 									</FormGroup>
+									<Button type="submit" color="primary" className="float-right">Login</Button>
 									<NavLink to="/" ><Button color="danger" className="float-left">Cancel</Button></NavLink>
 									<NavLink to="/reset" ><Button color="secondary">Reset Password</Button></NavLink>
-									<Button type="submit" color="primary" className="float-right">Login</Button>
 								</Form>
 							</CardBody>
 						</Card>

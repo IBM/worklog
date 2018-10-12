@@ -151,7 +151,7 @@ class App extends React.Component {
             <Route path="/login" render={(props) => <Login {...props} login={this.login} state={this.state} />} />
             <Route path="/reset" render={(props) => <Reset {...props} reset={this.reset} state={this.state} redirectToLogin={this.redirectToLogin} />} />
             <Route path="/create" render={(props) => <Create {...props} create={this.create} createError={this.createError} state={this.state} />} />
-            <Route path="/dashboard" render={(props) => <Dashboard {...props} state={this.state} redirectToLogin={this.redirectToLogin} updateLoading={this.updateLoading} />} />
+            <Route path="/dashboard" render={(props) => <Dashboard {...props} state={this.state} redirectToLogin={this.redirectToLogin} />} />
             <Route component={Error} />
           </Switch>
         </Router>
