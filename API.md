@@ -245,7 +245,7 @@ Type must be one of the following:
 	* office
 	* remote
 	* vacation
-	* holidays
+	* holiday
 	* sick
 Location is only required when the Type is `remote`
 

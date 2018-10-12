@@ -226,8 +226,8 @@ class TestScenarios(unittest.TestCase):
         response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-03&type=vacation')
         self.assertEqual(response.status_code, 200)
         
-        '''Create Holidays Entry'''
-        response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-04&type=holidays')
+        '''Create Holiday Entry'''
+        response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-04&type=holiday')
         self.assertEqual(response.status_code, 200)
         
         '''Create Sick Entry'''

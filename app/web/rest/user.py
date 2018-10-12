@@ -52,7 +52,7 @@ def handleUserData(user=""):
     if dayType:
         dayType = dayType.lower()
 
-        if dayType not in {"office","remote","vacation","holidays","sick"}:
+        if dayType not in {"office","remote","vacation","holiday","sick"}:
             return jsonify({"error": "Invalid day type given"}), 400
         
     if date:
