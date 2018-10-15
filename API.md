@@ -58,7 +58,7 @@ Password = Password for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 User Already Exists: When the user specified is already a valid user in the database, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -82,7 +82,7 @@ NewPassword = New password for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 Password Not Reset: When the user specified is not a valid username and/or the password specified is not valid/correct, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -100,7 +100,7 @@ User = Username for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 User Not Deleted: If the specified user is not deleted, the response is a 404 status code. The response body is a JSON object containing an error message.
 
@@ -159,7 +159,7 @@ User = Username for user.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 Work Log Data Not Deleted: When there is no data to delete, the response is a 404 status code. The response body is a JSON object containing an error message.
 
@@ -220,7 +220,7 @@ Year = Year to delete.
 
 __Response__
 
-Success: The response is a 200 status code. The response body is a JSON object contianing a success message.
+Success: The response is a 200 status code. The response body is a JSON object containing a success message.
 
 Invalid Year: When the year specified is not a valid integer year, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -265,7 +265,7 @@ __Response__
 
 Success: The response is a 200 status code. The response body is a JSON object containing the office information for a given year.
 
-No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
@@ -335,7 +335,7 @@ No Type Specified: When there is no type query parameter specified, the response
 
 No Location Specified: When there is no location query parameter specified, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Date Found: When there is no data for the date specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
 
@@ -357,6 +357,6 @@ Success: The response is a 200 status code. The response body is a JSON object c
 
 Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
-No Date Data Deleted: When there is no date query parameter specified or no data for the date specified, the response is a 404 status code. The response body is a JSON object cantaining an error.
+No Date Data Deleted: When there is no date query parameter specified or no data for the date specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
