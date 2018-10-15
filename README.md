@@ -15,10 +15,9 @@ When the reader has completed this Code Pattern, they will understand how to:
 * Incorporate MongoDB into a Python application
 * Deploy and run microservices on Kubernetes
 
+## Architecture
 
 ![](readme_images/architecture.png)
-
-## Architecture
 
 1. User interacts with the App UI to initially create an account, login to account, or reset password for their account. Once User is logged in, they can view, add, and edit their work log data.
 2. The functionality of the App UI that the User interacts with is handled by React. React is where the API calls are initialized.
@@ -75,13 +74,12 @@ $ cd worklog
 
 ### 2. Run the application
 1. Start the application by running `docker-compose up --build` in this repo's root directory.
-2. Once the containers are created and the application is running, use the Swagger at `http://localhost:5000/api` and [API.md](API.md) for instructions on how to use the APIs.
+2. Once the containers are created and the application is running, use the Open API Doc (Swagger) at `http://localhost:5000/api` and [API.md](API.md) for instructions on how to use the APIs.
 3. Use `http://localhost:3000` to access the React UI.
 
 ### 3. Deploy to IBM Cloud
-1. Provision the [IBM Cloud Kubernetes Service](https://www.ibm.com/cloud/container-service) and follow the instructions for creating a Container and Cluster.
 
-2. For making changes to either the Flask application or the React UI, a repo will need to be created on the [Docker Cloud](https://cloud.docker.com/) where the new modified containers will be pushed to. 
+1. To allow changes to the Flask application or the React UI, create a repo on [Docker Cloud](https://cloud.docker.com/) where the new modified containers will be pushed to. 
 > NOTE: If a new repo is used for the Docker containers, the container `image` will need to be modified to the name of the new repo used in [deploy-webapp.yml](deploy-webapp.yml) and/or [deploy-webappui.yml](deploy-webappui.yml).
 
 ```
@@ -90,9 +88,33 @@ $ export DOCKERHUB_USERNAME=<your-dockerhub-username>
 $ docker build -t $DOCKERHUB_USERNAME/worklog:latest .
 $ docker build -t $DOCKERHUB_USERNAME/worklogui:latest web/worklog
 
+$ docker login
+
 $ docker push $DOCKERHUB_USERNAME/worklog:latest
 $ docker push $DOCKERHUB_USERNAME/worklogui:latest
 ```
+
+2. Provision the [IBM Cloud Kubernetes Service](https://www.ibm.com/cloud/container-service) and follow the set of instructions for creating a Container and Cluster based on your cluster type, `Standard` vs `Lite`.
+
+#### Lite Cluster Instructions
+
+3. Run `bx cs workers mycluster` and locate the `Public IP`. This IP is used to access the worklog API and UI (Flask Application). Update the `env` values in both [deploy-webapp.yml](deploy-webapp.yml) and [deploy-webappui.yml](deploy-webappui.yml) to the `Public IP`.
+
+4. To deploy the services to the IBM Cloud Kubernetes Service, run:
+
+```
+$ kubectl apply -f deploy-mongodb.yml
+$ kubectl apply -f deploy-webapp.yml
+$ kubectl apply -f deploy-webappui.yml
+
+## Confirm the services are running - this may take a minute
+$ kubectl get pods
+```
+
+5. Use `https://PUBLIC_IP:32001` to access the React UI and the Open API Doc (Swagger) at `https://PUBLIC_IP:32000/api` for instructions on how to make API calls.
+
+#### Standard Cluster Instructions
+
 
 3. Run `bx cs cluster-get <CLUSTER_NAME>` and locate the `Ingress Subdomain` and `Ingress Secret`. This is the domain of the URL that is to be used to access the UI and Flask Application on the Cloud. Update the `env` values in both [deploy-webapp.yml](deploy-webapp.yml) and [deploy-webappui.yml](deploy-webappui.yml) to the `Ingress Subdomain`. In addition, update the `host` and `secretName` in [ingress.yml](ingress.yml) to `Ingress Subdomain` and `Ingress Secret`.
 
@@ -103,14 +125,14 @@ $ kubectl apply -f deploy-mongodb.yml
 $ kubectl apply -f deploy-webapp.yml
 $ kubectl apply -f deploy-webappui.yml
 
-## Confirm the services are running
+## Confirm the services are running - this may take a minute
 $ kubectl get pods
 
 ## Update protocol being used to https
 $ kubectl apply -f ingress.yml
 ```
 
-5. Use `https://<INGRESS_SUBDOMAIN>` to access the React UI at `https://<INGRESS_SUBDOMAIN>` and also the Swagger at `https://<INGRESS_SUBDOMAIN>/api` for instructions on how to make API calls.
+5. Use `https://<INGRESS_SUBDOMAIN>` to access the React UI and the Open API Doc (Swagger) at `https://<INGRESS_SUBDOMAIN>/api` for instructions on how to make API calls.
 
 
 # Links
