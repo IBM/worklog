@@ -71,6 +71,8 @@ class App extends React.Component {
 
       this.updateLoading();
 
+      this.setState({invalidLogin: false});
+
       const response = await fetch(API_BASE_URL+'/api/v1/login',{
         method: "POST",
         headers: {
@@ -103,6 +105,8 @@ class App extends React.Component {
 
     this.updateLoading();
 
+    this.setState({invalidCreate: false});
+
     const response = await fetch(API_BASE_URL+'/api/v1/user/create',{
       method: "PUT",
       headers: {
@@ -124,6 +128,8 @@ class App extends React.Component {
 
     this.updateLoading();
 
+    this.setState({invalidReset: false});
+
     const response = await fetch(API_BASE_URL+'/api/v1/user/'+username+'/reset',{
       method: "PUT",
       headers: {
@@ -133,14 +139,15 @@ class App extends React.Component {
                 new_password:newPassword})
     });
     const isReset = await response.ok;
+
+    this.updateLoading();
+
     if (isReset) {
       this.setState({invalidReset: false});
       this.redirectToLogin();
     } else {
       this.setState({invalidReset: true});
     }
-
-    this.updateLoading();
   }
 
   render() {
