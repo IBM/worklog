@@ -61,7 +61,15 @@ def getUserSettings(user):
 def updateUserSettings(user, updatedSettings):
     userCred = getUserCredentials(user)
     
-    settings = getUserSettings(user)
+    try:
+        settings = getUserSettings(user)
+    except:
+        settings = {"slack": "",
+                    "total": {
+                        "remote": -1,
+                        "vacation": -1,
+                        "holiday": -1,
+                        "sick": -1}}
     
     for setting in updatedSettings.keys():
         if setting.lower() == "slack":

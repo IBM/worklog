@@ -396,66 +396,69 @@ class Dashboard extends React.Component {
 			}
 		}
 
-		for (var i = 0; i < this.state.data.length; i++) {
-	    	if (year === this.state.data[i].year) {
-	    		currentIndex = i;
-	    		break;
-	    	}
-	    }
+		if (this.state.data) {
 
-		if (this.state.data && currentIndex < this.state.data.length && currentIndex >= 0) {
+			for (var i = 0; i < this.state.data.length; i++) {
+		    	if (year === this.state.data[i].year) {
+		    		currentIndex = i;
+		    		break;
+		    	}
+		    }
 
-			for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
-			    if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
-			      	var index = -1;
+			if (this.state.data && currentIndex < this.state.data.length && currentIndex >= 0) {
 
-		      		for(var j = 0; j < remoteData.length; j++) {
-		      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
-		      				index = j;
-		      				break;
-		      			}
-		      		}
+				for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
+				    if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
+				      	var index = -1;
 
-		   			if (index === -1) {
-		   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
-		   			} else {
-		   				remoteData[index].data = remoteData[index].data + 1;
-		   			}
+			      		for(var j = 0; j < remoteData.length; j++) {
+			      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
+			      				index = j;
+			      				break;
+			      			}
+			      		}
 
-			   		remote = remote + 1;
-			   		hasRemote = true;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
-		   			office = office + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
-		   			vacation = vacation + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
-		   			holiday = holiday + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
-		   			sick = sick + 1;
-		   		}
+			   			if (index === -1) {
+			   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
+			   			} else {
+			   				remoteData[index].data = remoteData[index].data + 1;
+			   			}
+
+				   		remote = remote + 1;
+				   		hasRemote = true;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
+			   			office = office + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
+			   			vacation = vacation + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
+			   			holiday = holiday + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
+			   			sick = sick + 1;
+			   		}
+				}
 			}
-		}
 
-		remoteData.sort(function(a,b){
-	    	return a.data < b.data;
-	    })
+			remoteData.sort(function(a,b){
+		    	return a.data < b.data;
+		    })
 
-		var remoteTopFiveData = [];
-		var remoteTopFiveLabels = [];
-		var otherTotal = 0;
+			var remoteTopFiveData = [];
+			var remoteTopFiveLabels = [];
+			var otherTotal = 0;
 
-		for (i = 0; i < remoteData.length; i++) {
-			if (i < 5) {
-				remoteTopFiveData.push(remoteData[i].data);
-				remoteTopFiveLabels.push(remoteData[i].label);
-			} else {
-				otherTotal = otherTotal + remoteData[i].data;
+			for (i = 0; i < remoteData.length; i++) {
+				if (i < 5) {
+					remoteTopFiveData.push(remoteData[i].data);
+					remoteTopFiveLabels.push(remoteData[i].label);
+				} else {
+					otherTotal = otherTotal + remoteData[i].data;
+				}
 			}
-		}
 
-		if (remoteData.length > 5) {
-			remoteTopFiveData.push(otherTotal);
-			remoteTopFiveLabels.push("Other");
+			if (remoteData.length > 5) {
+				remoteTopFiveData.push(otherTotal);
+				remoteTopFiveLabels.push("Other");
+			}
 		}
 
   		this.setState({hasRemote: hasRemote,
@@ -501,67 +504,70 @@ class Dashboard extends React.Component {
 			}
 		}
 
-		for (var i = 0; i < this.state.data.length; i++) {
-	    	if (year === this.state.data[i].year) {
-	    		currentIndex = i;
-	    		break;
-	    	}
-	    }
+		if (this.state.data) {
 
-		if (this.state.data && currentIndex >= 0 && currentIndex < this.state.data.length) {
+			for (var i = 0; i < this.state.data.length; i++) {
+		    	if (year === this.state.data[i].year) {
+		    		currentIndex = i;
+		    		break;
+		    	}
+		    }
 
-			for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
-		   		if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
-			      	var index = -1;
+			if (this.state.data && currentIndex >= 0 && currentIndex < this.state.data.length) {
 
-		      		for(var j = 0; j < remoteData.length; j++) {
-		      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
-		      				index = j;
-		      				break;
-		      			}
-		      		}
+				for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
+			   		if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
+				      	var index = -1;
 
-		   			if (index === -1) {
-		   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
-		   			} else {
-		   				remoteData[index].data = remoteData[index].data + 1;
-		   			}
+			      		for(var j = 0; j < remoteData.length; j++) {
+			      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
+			      				index = j;
+			      				break;
+			      			}
+			      		}
 
-			   		remote = remote + 1;
-			   		hasRemote = true;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
-		   			office = office + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
-		   			vacation = vacation + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
-		   			holiday = holiday + 1;
-		   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
-		   			sick = sick + 1;
-		   		}
+			   			if (index === -1) {
+			   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
+			   			} else {
+			   				remoteData[index].data = remoteData[index].data + 1;
+			   			}
+
+				   		remote = remote + 1;
+				   		hasRemote = true;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
+			   			office = office + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
+			   			vacation = vacation + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
+			   			holiday = holiday + 1;
+			   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
+			   			sick = sick + 1;
+			   		}
+				}
+
 			}
 
-		}
+			remoteData.sort(function(a,b){
+		    	return a.data < b.data;
+		    })
 
-		remoteData.sort(function(a,b){
-	    	return a.data < b.data;
-	    })
+			var remoteTopFiveData = [];
+			var remoteTopFiveLabels = [];
+			var otherTotal = 0;
 
-		var remoteTopFiveData = [];
-		var remoteTopFiveLabels = [];
-		var otherTotal = 0;
-
-		for (i = 0; i < remoteData.length; i++) {
-			if (i < 5) {
-				remoteTopFiveData.push(remoteData[i].data);
-				remoteTopFiveLabels.push(remoteData[i].label);
-			} else {
-				otherTotal = otherTotal + remoteData[i].data;
+			for (i = 0; i < remoteData.length; i++) {
+				if (i < 5) {
+					remoteTopFiveData.push(remoteData[i].data);
+					remoteTopFiveLabels.push(remoteData[i].label);
+				} else {
+					otherTotal = otherTotal + remoteData[i].data;
+				}
 			}
-		}
 
-		if (remoteData.length > 5) {
-			remoteTopFiveData.push(otherTotal);
-			remoteTopFiveLabels.push("Other");
+			if (remoteData.length > 5) {
+				remoteTopFiveData.push(otherTotal);
+				remoteTopFiveLabels.push("Other");
+			}
 		}
 
   		this.setState({hasRemote: hasRemote,
