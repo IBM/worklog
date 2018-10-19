@@ -803,7 +803,8 @@ class Dashboard extends React.Component {
 											</FormGroup>
 											<FormGroup row>
 												<Label for="location" sm={2}>Location:</Label>
-												<Col sm={5}><Input id="location" type="text" disabled={!this.state.isRemote} value={this.state.locationValue} onChange={e => this.setState({locationValue: e.target.value})} /></Col>
+												<Col sm={5}><Input invalid={this.state.addError && this.state.dayType === "remote"} id="location" type="text" disabled={!this.state.isRemote} value={this.state.locationValue} onChange={e => this.setState({locationValue: e.target.value})} /></Col>
+												{this.state.dayType === "remote" ? (<Col><div><font color="red">* Required</font></div></Col>) : ''}
 											</FormGroup>
 											<FormGroup row>
 												<Label for="notes" sm={2}>Notes:</Label>
@@ -816,10 +817,10 @@ class Dashboard extends React.Component {
 								</Row>
 								<Row>
 									<Col>
-										<Alert color="danger" isOpen={this.state.selectionError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
-										<Alert color="danger" isOpen={this.state.addError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
-										<Alert color="danger" isOpen={this.state.updateError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
-										<Alert color="danger" isOpen={this.state.deleteError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
+										<Alert color="danger" isOpen={this.state.selectionError} toggle={this.onDismiss}>Error: Unable to select date</Alert>
+										<Alert color="danger" isOpen={this.state.addError} toggle={this.onDismiss}>Error: Unable to add event</Alert>
+										<Alert color="danger" isOpen={this.state.updateError} toggle={this.onDismiss}>Error: Unable to update event</Alert>
+										<Alert color="danger" isOpen={this.state.deleteError} toggle={this.onDismiss}>Error: Unable to delete event</Alert>
 										<BigCalendar
 											date={this.state.dates[0]}
 											onNavigate={(this.calNavigate)}
