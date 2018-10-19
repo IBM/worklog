@@ -112,6 +112,10 @@ class Dashboard extends React.Component {
 
 		    var events = [];
 		    var hasEvent = false;
+		    var dayType = this.state.dayType;
+		    var locationValue = this.state.locationValue;
+		    var notes = this.state.notes;
+		    var isRemote = this.state.isRemote;
 
 		    for (var i = 0; i < data.length; i++) {
 		    	for (var j = 0; j < data[i].entries.length; j++) {
@@ -135,6 +139,15 @@ class Dashboard extends React.Component {
   						&& tempdate.getMonth() === this.state.dates[0].getMonth()
   						&& tempdate.getDate() === this.state.dates[0].getDate()) {
 						hasEvent = true;
+						dayType = data[i].entries[j].type;
+						notes = data[i].entries[j].notes
+
+						if (data[i].entries[j].type === "remote") {
+							isRemote = true;
+							locationValue = data[i].entries[j].location
+						} else {
+							isRemote = false;
+						}
 					}
 		    	}
 		    }
@@ -220,6 +233,10 @@ class Dashboard extends React.Component {
 		    				year: year,
 		    				events: events,
 		    				hasEvent: hasEvent,
+		    				isRemote: isRemote,
+		    				dayType: dayType,
+		    				locationValue: locationValue,
+		    				notes: notes,
 		    				data: data,
 		    				charData:{
 								datasets: [{
