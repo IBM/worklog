@@ -1,9 +1,9 @@
 import React from "react";
 import {Doughnut} from "react-chartjs-2";
-import { Button, Alert, Card, CardTitle, CardBody, CardHeader, Form, FormGroup, Label, Input, Container, Row, Col, Nav, NavItem, NavLink, TabContent, TabPane, Modal, ModalBody, ModalHeader } from 'reactstrap';
+import {NavLink} from "react-router-dom";
+import { Button, Alert, Card, CardTitle, CardBody, Form, FormGroup, Label, Input, Container, Row, Col, Nav, Navbar, NavbarBrand, ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import BigCalendar from 'react-big-calendar';
 import moment from 'moment';
-import classnames from 'classnames';
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -11,33 +11,11 @@ const API_BASE_URL = process.env.REACT_APP_APP_SERVER;
 
 const localizer = BigCalendar.momentLocalizer(moment);
 
-function getRandomColor(length) {
-	var result = [];
-    var color = '';
-    for (var i = 0; i < length; i++) {
-    	color = 'rgba(';
-    	for (var j = 0; j < 3; j++ ) {
-        	color += Math.floor(Math.random() * 255) +',';
-    	}
-    	result.push(color+'0.6)');
-    }
-    return result;
-}
-
-function getIndex(value, arr) {
-	for(var i = 0; i < arr.length; i++) {
-        if(arr[i] === value) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 class Dashboard extends React.Component {
 	constructor(props){
 		super(props);
 
-		var session = "";
+		var session;
 
 		if (sessionStorage.getItem("session") === "false") {
 			session = false;
@@ -50,46 +28,48 @@ class Dashboard extends React.Component {
 			session: session,
 			data: undefined,
 			hasRemote: false,
-			activeTab: '1',
-			startdate: new Date(),
-			lastdate: new Date(),
-			modifyEventDate: "2000-01-01",
+			hasEvent: false,
+			year: (new Date()).getFullYear(),
+			dates: [new Date()],
 			dayType: "office",
 			locationValue: "",
-			addEventsDates: [new Date()],
+			notes: "",
 			isRemote: false,
 			addError: false,
 			updateError: false,
 			deleteError: false,
 			selectionError: false,
-			eventModal: false,
-			addModal: false,
+			dropdownOpen: false,
+			remoteTotal: 0,
+			vacationTotal: 0,
+			holidayTotal: 0,
+			sickTotal: 0,
 			events: [],
 			charData:{
 				datasets: [{
-    				data: [1,1,1,1,1],
-    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)','rgba(0,255,0,0.6)','rgba(255,165,0,0.6)','rgba(255,0,0,0.6)']
+    				data: [0,0,0,0,0],
+    				backgroundColor: ['rgba(51,153,255,0.6)','rgba(51,0,204,0.6)','rgba(255,204,0,0.6)','rgba(255,51,204,0.6)','rgba(255,0,0,0.6)']
     				}],
     			labels: ['Office','Remote','Vacation','Holiday','Sick']
 			},
 			remoteCharData:{
 				datasets: [{
-    				data: [1,1],
-    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)']
+    				data: [0,0,0,0,0,0],
+    				backgroundColor: ['rgba(255,0,0,0.6)','rgba(255,153,51,0.6)','rgba(255,0,204,0.6)','rgba(255,255,51,0.6)','rgba(51,153,255,0.6)','rgba(0,0,204,0.6)']
     				}],
-    			labels: ['United States','Canada']
+    			labels: ['New York','Toronto','North Dakota','Oregon','Washington','Other']
 			}
 		}
 
 		if (sessionStorage.getItem("session") === "true" && sessionStorage.getItem("user") !== ""){
 			this.getData();
+			this.getSettings();
 		}
 
 		this.handleDayType = this.handleDayType.bind(this);
-		this.toggleEventModal = this.toggleEventModal.bind(this);
-		this.toggleAddModal = this.toggleAddModal.bind(this);
-		this.toggleTab = this.toggleTab.bind(this);
 		this.onDismiss = this.onDismiss.bind(this);
+		this.toggleDropdown = this.toggleDropdown.bind(this);
+		this.calNavigate = this.calNavigate.bind(this);
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -109,20 +89,19 @@ class Dashboard extends React.Component {
 	    	} else if (data["error"] === "No data found") {
 	    		this.setState({data: undefined,
 	    						events: [],
-	    						currentIndex: 0,
 	    						charData:{
 									datasets: [{
-					    				data: [1,1,1,1,1],
-					    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)','rgba(0,255,0,0.6)','rgba(255,165,0,0.6)','rgba(255,0,0,0.6)']
+					    				data: [0,0,0,0,0],
+					    				backgroundColor: ['rgba(51,153,255,0.6)','rgba(51,0,204,0.6)','rgba(255,204,0,0.6)','rgba(255,51,204,0.6)','rgba(255,0,0,0.6)']
 					    				}],
 					    			labels: ['Office','Remote','Vacation','Holiday','Sick']
 								},
 								remoteCharData:{
 									datasets: [{
-					    				data: [1,1],
-					    				backgroundColor: ['rgba(255,255,0,0.6)','rgba(0,0,255,0.6)']
-					    				}],
-					    			labels: ['United States','Canada']
+					    				data: [0,0,0,0,0,0],
+    									backgroundColor: ['rgba(255,0,0,0.6)','rgba(255,153,51,0.6)','rgba(255,0,204,0.6)','rgba(255,255,51,0.6)','rgba(51,153,255,0.6)','rgba(0,0,204,0.6)']
+    								}],
+    								labels: ['New York','Toronto','North Dakota','Oregon','Washington','Other']
 								}});
 	    	}
 	    } else {
@@ -132,82 +111,115 @@ class Dashboard extends React.Component {
 		    })
 
 		    var events = [];
+		    var hasEvent = false;
 
 		    for (var i = 0; i < data.length; i++) {
 		    	for (var j = 0; j < data[i].entries.length; j++) {
 		    		var tempdate = new Date(data[i].entries[j].date);
 		    		tempdate.setDate(tempdate.getDate()+1);
-		    		var title = data[i].entries[j].type;
+		    		var title = data[i].entries[j].type.charAt(0).toUpperCase() + data[i].entries[j].type.slice(1);
 
-		    		if (title === "remote") {
+		    		if (title === "Remote") {
 		    			title = title + ": " + data[i].entries[j].location
 		    		} 
 
 		    		var event = {title: title,
 							   	start: tempdate,
 							   	end: tempdate,
-							   	allDay: true
+							   	allDay: true,
+							   	notes: data[i].entries[j].notes
 							   	}
 					events.push(event);
+
+					if (tempdate.getFullYear() === this.state.dates[0].getFullYear()
+  						&& tempdate.getMonth() === this.state.dates[0].getMonth()
+  						&& tempdate.getDate() === this.state.dates[0].getDate()) {
+						hasEvent = true;
+					}
 		    	}
 		    }
 
 		    var remoteData = [];
-		    var remoteLabels = [];
 		    var office = 0;
 		    var remote = 0;
 		    var vacation = 0;
 		    var holiday = 0;
 		    var sick = 0;
 		    var hasRemote = false;
-		    var startdate = new Date();
-		    var lastdate = new Date();
+		    var year = this.state.year;
+		    var currentIndex;
 
-		    for (i = 0; i < data[data.length-1].entries.length; i++) {
-		    	if (i === 0) {
-		    		startdate = new Date(data[data.length-1].entries[i].date);
-		    		lastdate = new Date(data[data.length-1].entries[i].date);
-		    	} else {
-		    		tempdate = new Date(data[data.length-1].entries[i].date);
-		    		if (tempdate < startdate) {
-		    			startdate = tempdate;
-		    		}
-		    		if (tempdate > lastdate) {
-		    			lastdate = tempdate;
-		    		}
+		    for (i = 0; i < data.length; i++) {
+		    	if (year === data[i].year) {
+		    		currentIndex = i;
+		    		break;
 		    	}
+		    }
 
-	   			if (data[data.length-1].entries[i].hasOwnProperty("location")) {
-		      		var index = getIndex(data[data.length-1].entries[i].location,remoteLabels);
+		    if (currentIndex !== undefined) {
 
-		   			if (index === -1) {
-		   				remoteLabels.push(data[data.length-1].entries[i].location);
-		   				remoteData.push(1);
-		   			} else {
-		   				remoteData[index] = remoteData[index] + 1;
+			    for (i = 0; i < data[currentIndex].entries.length; i++) {
+			    	if (i === 0) {
+			    		tempdate = new Date(data[currentIndex].entries[i].date);
+			    		year = tempdate.getFullYear();
+			    	}
+
+		   			if (data[currentIndex].entries[i].hasOwnProperty("location")) {
+			      		var index = -1;
+
+			      		for(j = 0; j < remoteData.length; j++) {
+			      			if (data[currentIndex].entries[i].location === remoteData[j].label) {
+			      				index = j;
+			      				break;
+			      			}
+			      		}
+
+			   			if (index === -1) {
+			   				remoteData.push({data:1,label:data[currentIndex].entries[i].location});
+			   			} else {
+			   				remoteData[index].data = remoteData[index].data + 1;
+			   			}
+
+			   			remote = remote + 1;
+			   			hasRemote = true;
+		   			} else if (data[currentIndex].entries[i].type === "office") {
+		   				office = office + 1;
+		   			} else if (data[currentIndex].entries[i].type === "vacation") {
+		   				vacation = vacation + 1;
+		   			} else if (data[currentIndex].entries[i].type === "holiday") {
+		   				holiday = holiday + 1;
+		   			} else if (data[currentIndex].entries[i].type === "sick") {
+		   				sick = sick + 1;
 		   			}
+				}
 
-		   			remote = remote + 1;
-		   			hasRemote = true;
-	   			} else if (data[data.length-1].entries[i].type === "office") {
-	   				office = office + 1;
-	   			} else if (data[data.length-1].entries[i].type === "vacation") {
-	   				vacation = vacation + 1;
-	   			} else if (data[data.length-1].entries[i].type === "holiday") {
-	   				holiday = holiday + 1;
-	   			} else if (data[data.length-1].entries[i].type === "sick") {
-	   				sick = sick + 1;
-	   			}
+				remoteData.sort(function(a,b){
+			    	return a.data < b.data;
+			    })
+
+				var remoteTopFiveData = [];
+				var remoteTopFiveLabels = [];
+				var otherTotal = 0;
+
+				for (i = 0; i < remoteData.length; i++) {
+					if (i < 5) {
+						remoteTopFiveData.push(remoteData[i].data);
+						remoteTopFiveLabels.push(remoteData[i].label);
+					} else {
+						otherTotal = otherTotal + remoteData[i].data;
+					}
+				}
+
+				if (remoteData.length > 5) {
+					remoteTopFiveData.push(otherTotal);
+					remoteTopFiveLabels.push("Other");
+				}
 			}
 
-			startdate.setDate(startdate.getDate()+1);
-			lastdate.setDate(lastdate.getDate()+1);
-
-		    this.setState({currentIndex: data.length-1,
-		    				hasRemote: hasRemote, 
-		    				startdate: startdate,
-		    				lastdate: lastdate,
+		    this.setState({hasRemote: hasRemote, 
+		    				year: year,
 		    				events: events,
+		    				hasEvent: hasEvent,
 		    				data: data,
 		    				charData:{
 								datasets: [{
@@ -222,13 +234,27 @@ class Dashboard extends React.Component {
 				    		},
 				    		remoteCharData:{
 								datasets: [{
-				    				data: remoteData,
-				    				backgroundColor: getRandomColor(remoteData.length)
+				    				data: remoteTopFiveData,
+				    				backgroundColor: this.state.remoteCharData.datasets[0].backgroundColor
 				    				}],
-				    			labels: remoteLabels
+				    			labels: remoteTopFiveLabels
 				    		}})
 		}
   	}
+
+  	getSettings = async () => {
+
+	    const response = await fetch(API_BASE_URL+'/api/v1/user/'+sessionStorage.getItem("user")+'/settings');
+	    var data = await response.json();
+	    if ("error" in data) {
+	    	this.setState({session: false});
+	    } else {
+	    	this.setState({remoteTotal: data["settings"]["total"]["remote"],
+	    					vacationTotal: data["settings"]["total"]["vacation"],
+	    					holidayTotal: data["settings"]["total"]["holiday"],
+	    					sickTotal: data["settings"]["total"]["sick"]});
+	    }
+	}
 
   	exportData = (e) => {
   		if(e) e.preventDefault();
@@ -260,60 +286,57 @@ class Dashboard extends React.Component {
 	    downloadLink.click();
   	}
 
-  	addDays = async (e) => {
+
+  	handleUpdate = (e) => {
   		if(e) e.preventDefault();
 
-  		this.toggleAddModal(e);
+  		var put = false;
 
-  		this.setState({addError: false});
-
-  		var response;
-  		var status;
-
-  		for (var i = 0; i < this.state.addEventsDates.length; i++) {
-	  		response = await fetch(API_BASE_URL+'/api/v1/user/'
-	  								+sessionStorage.getItem("user")
-	  								+'?date='+this.state.addEventsDates[i].toISOString().substring(0,10)
-	  								+'&type='+this.state.dayType
-	  								+'&location='+this.state.locationValue,{
-	      		method: "POST"
-	    	});
-
-	    	status = await response.status;
-
-	    	if (status === 400) {
-	    		this.setState({addError: true});
-	    	} else if (status === 403) {
-	    		this.setState({session: false});
-	    		break;
-	    	}
-    	}
-
-    	if (this.state.session) {
-    		this.getData();
-    	}
+  		for (var i = 0; i < this.state.dates.length; i++) {
+  			put = false;
+  			for (var j = 0; j < this.state.events.length; j++) {
+  				if (this.state.dates[i].getFullYear() === this.state.events[j].start.getFullYear()
+  					&& this.state.dates[i].getMonth() === this.state.events[j].start.getMonth()
+  					&& this.state.dates[i].getDate() === this.state.events[j].start.getDate()) {
+  					this.updateEvent(i,"PUT");
+  					put = true;
+  					break;
+  				}
+  			}
+  			if (!put) {
+  				this.updateEvent(i,"POST");
+  			}
+  		}
   	}
 
-  	updateEvent = async (e) => {
-  		if(e) e.preventDefault();
-
-  		this.toggleEventModal(e);
+  	updateEvent = async (index, method) => {
 
   		const response = await fetch(API_BASE_URL+'/api/v1/user/'
   									+sessionStorage.getItem("user")
-  									+'?date='+this.state.modifyEventDate
+  									+'?date='+this.state.dates[index].toISOString().substring(0,10)
   									+'&type='+this.state.dayType
   									+'&location='+this.state.locationValue,{
-      		method: "PUT"
+      		method: method,
+      		headers: {
+        		"Content-Type": "application/json"
+      		},
+      		body: JSON.stringify({notes:this.state.notes})
     	});
 
     	const status = await response.status;
 
     	if (status === 200) {
-    		this.setState({updateError: false});
     		this.getData();
+    		this.getSettings();
     	} else if (status === 400) {
-    		this.setState({updateError: true});
+    		if (method === "POST") {
+    			this.setState({addError: true});
+    		} else if (method === "PUT") {
+    			this.setState({updateError: false});
+    		}
+
+    		this.getData();
+    		this.getSettings();
     	} else if (status === 403) {
     		this.setState({session: false});
     	}
@@ -323,85 +346,120 @@ class Dashboard extends React.Component {
   	deleteEvent = async (e) => {
   		if(e) e.preventDefault();
 
-  		this.toggleEventModal(e);
+  		this.setState({deleteError: false});
 
-  		const response = await fetch(API_BASE_URL+'/api/v1/user/'
+  		var response;
+  		var status;
+
+  		for (var i = 0; i < this.state.dates.length; i++) {
+  			response = await fetch(API_BASE_URL+'/api/v1/user/'
   									+sessionStorage.getItem("user")
-  									+'?date='+this.state.modifyEventDate,{
-      		method: "DELETE"
-    	});
+  									+'?date='+this.state.dates[i].toISOString().substring(0,10),{
+	      		method: "DELETE"
+	    	});
 
-    	const status = await response.status;
+	    	status = await response.status;
 
-    	if (status === 200) {
-    		this.setState({deleteError: false});
-    		this.getData();
-    	} else if (status === 400) {
-    		this.setState({deleteError: true});
-    	} else if (status === 403) {
-    		this.setState({session: false});
+	    	if (status === 400) {
+	    		this.setState({deleteError: true});
+	    	} else if (status === 403) {
+	    		this.setState({session: false});
+	    		break;
+	    	}
     	}
-    	
+
+    	if (this.state.session) {
+    		this.getData();
+    		this.getSettings();
+    		this.setState({hasEvent: false});
+    	}
   	}
 
   	next = (e) => {
-  		if(e) e.preventDefault();
 
   		var remoteData = [];
-	    var remoteLabels = [];
 	    var office = 0;
 		var remote = 0;
 		var vacation = 0;
 		var holiday = 0;
 		var sick = 0;
 		var hasRemote = false;
-		var startdate = new Date();
-		var lastdate = new Date();
+		var year = this.state.year + 1;
+		var currentIndex;
 
-		for (var i = 0; i < this.state.data[this.state.currentIndex+1].entries.length; i++) {
-		    if (i === 0) {
-		    	startdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
-		    	lastdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
-		    } else {
-		    	var tempdate = new Date(this.state.data[this.state.currentIndex+1].entries[i].date);
-		    	if (tempdate < startdate) {
-		    		startdate = tempdate;
-		    	}
-		    	if (tempdate > lastdate) {
-		    		lastdate = tempdate;
-		    	}
-		    }
-
-	   		if (this.state.data[this.state.currentIndex+1].entries[i].hasOwnProperty("location")) {
-		      	var index = getIndex(this.state.data[this.state.currentIndex+1].entries[i].location,remoteLabels);
-
-		   		if (index === -1) {
-		   			remoteLabels.push(this.state.data[this.state.currentIndex+1].entries[i].location);
-		   			remoteData.push(1);
-		   		} else {
-		   			remoteData[index] = remoteData[index] + 1;
-		   		}
-
-		   		remote = remote + 1;
-		   		hasRemote = true;
-	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "office") {
-	   			office = office + 1;
-	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "vacation") {
-	   			vacation = vacation + 1;
-	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "holiday") {
-	   			holiday = holiday + 1;
-	   		} else if (this.state.data[this.state.currentIndex+1].entries[i].type === "sick") {
-	   			sick = sick + 1;
-	   		}
+		if (e) {
+			if (e.hasOwnProperty("year")) {
+				year = e.year;
+			} else {
+				var newDate = new Date(year,this.state.dates[0].getMonth(),this.state.dates[0].getDate());
+				this.setState({dates: [newDate]});
+			}
 		}
 
-		startdate.setDate(startdate.getDate()+1);
-		lastdate.setDate(lastdate.getDate()+1);
+		for (var i = 0; i < this.state.data.length; i++) {
+	    	if (year === this.state.data[i].year) {
+	    		currentIndex = i;
+	    		break;
+	    	}
+	    }
 
-  		this.setState({currentIndex: this.state.currentIndex+1,
-  						hasRemote: hasRemote,
-  						startdate: startdate,
-  						lastdate: lastdate,
+		if (this.state.data && currentIndex < this.state.data.length && currentIndex >= 0) {
+
+			for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
+			    if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
+			      	var index = -1;
+
+		      		for(var j = 0; j < remoteData.length; j++) {
+		      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
+		      				index = j;
+		      				break;
+		      			}
+		      		}
+
+		   			if (index === -1) {
+		   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
+		   			} else {
+		   				remoteData[index].data = remoteData[index].data + 1;
+		   			}
+
+			   		remote = remote + 1;
+			   		hasRemote = true;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
+		   			office = office + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
+		   			vacation = vacation + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
+		   			holiday = holiday + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
+		   			sick = sick + 1;
+		   		}
+			}
+		}
+
+		remoteData.sort(function(a,b){
+	    	return a.data < b.data;
+	    })
+
+		var remoteTopFiveData = [];
+		var remoteTopFiveLabels = [];
+		var otherTotal = 0;
+
+		for (i = 0; i < remoteData.length; i++) {
+			if (i < 5) {
+				remoteTopFiveData.push(remoteData[i].data);
+				remoteTopFiveLabels.push(remoteData[i].label);
+			} else {
+				otherTotal = otherTotal + remoteData[i].data;
+			}
+		}
+
+		if (remoteData.length > 5) {
+			remoteTopFiveData.push(otherTotal);
+			remoteTopFiveLabels.push("Other");
+		}
+
+  		this.setState({hasRemote: hasRemote,
+  						year: year,
   						charData:{
 							datasets: [{
 			    				data: [office,
@@ -415,71 +473,99 @@ class Dashboard extends React.Component {
 			    		},
 			    		remoteCharData:{
 							datasets: [{
-			    				data: remoteData,
-			    				backgroundColor: getRandomColor(remoteData.length)
+			    				data: remoteTopFiveData,
+			    				backgroundColor: this.state.remoteCharData.datasets[0].backgroundColor
 			    				}],
-			    			labels: remoteLabels
+			    			labels: remoteTopFiveLabels
 			    		}});
   	}
 
   	previous = (e) => {
-  		if(e) e.preventDefault();
 
   		var remoteData = [];
-	    var remoteLabels = [];
 	    var office = 0;
 		var remote = 0;
 		var vacation = 0;
 		var holiday = 0;
 		var sick = 0;
 		var hasRemote = false;
-		var startdate = new Date();
-		var lastdate = new Date();
+		var year = this.state.year - 1;
+		var currentIndex;
 
-		for (var i = 0; i < this.state.data[this.state.currentIndex-1].entries.length; i++) {
-		    if (i === 0) {
-		    	startdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
-		    	lastdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
-		    } else {
-		    	var tempdate = new Date(this.state.data[this.state.currentIndex-1].entries[i].date);
-		    	if (tempdate < startdate) {
-		    		startdate = tempdate;
-		    	}
-		    	if (tempdate > lastdate) {
-		    		lastdate = tempdate;
-		    	}
-		    }
-
-	   		if (this.state.data[this.state.currentIndex-1].entries[i].hasOwnProperty("location")) {
-		      	var index = getIndex(this.state.data[this.state.currentIndex-1].entries[i].location,remoteLabels);
-
-		   		if (index === -1) {
-		   			remoteLabels.push(this.state.data[this.state.currentIndex-1].entries[i].location);
-		   			remoteData.push(1);
-		   		} else {
-		   			remoteData[index] = remoteData[index] + 1;
-		   		}
-
-		   		remote = remote + 1;
-		   		hasRemote = true;
-	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "office") {
-	   			office = office + 1;
-	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "vacation") {
-	   			vacation = vacation + 1;
-	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "holiday") {
-	   			holiday = holiday + 1;
-	   		} else if (this.state.data[this.state.currentIndex-1].entries[i].type === "sick") {
-	   			sick = sick + 1;
-	   		}
+		if (e) {
+			if (e.hasOwnProperty("year")) {
+				year = e.year;
+			} else {
+				var newDate = new Date(year,this.state.dates[0].getMonth(),this.state.dates[0].getDate());
+				this.setState({dates: [newDate]});
+			}
 		}
 
-		startdate.setDate(startdate.getDate()+1);
-		lastdate.setDate(lastdate.getDate()+1);
+		for (var i = 0; i < this.state.data.length; i++) {
+	    	if (year === this.state.data[i].year) {
+	    		currentIndex = i;
+	    		break;
+	    	}
+	    }
 
-  		this.setState({currentIndex: this.state.currentIndex-1,
-  						hasRemote: hasRemote,
-  						startdate: startdate,
-  						lastdate: lastdate,
+		if (this.state.data && currentIndex >= 0 && currentIndex < this.state.data.length) {
+
+			for (i = 0; i < this.state.data[currentIndex].entries.length; i++) {
+		   		if (this.state.data[currentIndex].entries[i].hasOwnProperty("location")) {
+			      	var index = -1;
+
+		      		for(var j = 0; j < remoteData.length; j++) {
+		      			if (this.state.data[currentIndex].entries[i].location === remoteData[j].label) {
+		      				index = j;
+		      				break;
+		      			}
+		      		}
+
+		   			if (index === -1) {
+		   				remoteData.push({data:1,label:this.state.data[currentIndex].entries[i].location});
+		   			} else {
+		   				remoteData[index].data = remoteData[index].data + 1;
+		   			}
+
+			   		remote = remote + 1;
+			   		hasRemote = true;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "office") {
+		   			office = office + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "vacation") {
+		   			vacation = vacation + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "holiday") {
+		   			holiday = holiday + 1;
+		   		} else if (this.state.data[currentIndex].entries[i].type === "sick") {
+		   			sick = sick + 1;
+		   		}
+			}
+
+		}
+
+		remoteData.sort(function(a,b){
+	    	return a.data < b.data;
+	    })
+
+		var remoteTopFiveData = [];
+		var remoteTopFiveLabels = [];
+		var otherTotal = 0;
+
+		for (i = 0; i < remoteData.length; i++) {
+			if (i < 5) {
+				remoteTopFiveData.push(remoteData[i].data);
+				remoteTopFiveLabels.push(remoteData[i].label);
+			} else {
+				otherTotal = otherTotal + remoteData[i].data;
+			}
+		}
+
+		if (remoteData.length > 5) {
+			remoteTopFiveData.push(otherTotal);
+			remoteTopFiveLabels.push("Other");
+		}
+
+  		this.setState({hasRemote: hasRemote,
+  						year: year,
   						charData:{
 							datasets: [{
 			    				data: [office,
@@ -493,25 +579,45 @@ class Dashboard extends React.Component {
 			    		},
 			    		remoteCharData:{
 							datasets: [{
-			    				data: remoteData,
-			    				backgroundColor: getRandomColor(remoteData.length)
+			    				data: remoteTopFiveData,
+			    				backgroundColor: this.state.remoteCharData.datasets[0].backgroundColor
 			    				}],
-			    			labels: remoteLabels
+			    			labels: remoteTopFiveLabels
 			    		}});
+  	}
+
+  	nextDays = (e) => {
+  		if(e) e.preventDefault();
+
+  		var nextDays = [];
+  		var tempdate;
+
+  		for (var i = 0; i < this.state.dates.length; i++) {
+  			tempdate = new Date(this.state.dates[i].getFullYear(),this.state.dates[i].getMonth(),this.state.dates[i].getDate()+1);
+  			nextDays.push(tempdate);
+  		}
+
+  		this.calNavigate({slots:nextDays});
+  	}
+
+  	previousDays = (e) => {
+  		if(e) e.preventDefault();
+  		
+  		var nextDays = [];
+  		var tempdate;
+
+  		for (var i = 0; i < this.state.dates.length; i++) {
+  			tempdate = new Date(this.state.dates[i].getFullYear(),this.state.dates[i].getMonth(),this.state.dates[i].getDate()-1);
+  			nextDays.push(tempdate);
+  		}
+
+  		this.calNavigate({slots:nextDays});
   	}
 
   	logout = (e) => {
   		if(e) e.preventDefault();
 
   		this.setState({session: false});
-  	}
-
-  	toggleTab(tab) {
-    	if (this.state.activeTab !== tab) {
-      		this.setState({
-       			activeTab: tab
-     		});
-    	}
   	}
 
   	onDismiss() {
@@ -522,75 +628,8 @@ class Dashboard extends React.Component {
     					});
   	}
 
-  	toggleEventModal(e) {
-
-  		if (e.hasOwnProperty("title")) {
-  			if (e.title.indexOf("remote") >= 0) {
-  				this.setState({
-	  				dayType: "remote",
-	  				isRemote: true,
-	  				locationValue: e.title.substring(8,e.title.length),
-	  				selectionError: false,
-	      			eventModal: !this.state.eventModal
-	    		});
-  			} else {
-	  			this.setState({
-	  				dayType: e.title,
-	  				isRemote: false,
-	  				locationValue: "",
-	  				selectionError: false,
-	      			eventModal: !this.state.eventModal
-	    		});
-  			}
-  		} else {
-    		this.setState({
-    			selectionError: false,
-      			eventModal: !this.state.eventModal
-    		});
-    	}
-
-    	if (e.hasOwnProperty("start")) {
-    		var updatedDay = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate());
-    		var dateString = updatedDay.toISOString().substring(0,10);
-
-    		this.setState({
-    			selectionError: false,
-    			modifyEventDate: dateString
-    		});
-    	}
-  	}
-
-  	toggleAddModal(e) {
-
-  		if (e.hasOwnProperty("start")) {
-	  		var tempdate = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate());
-	  		var invalid = false;
-
-	  		for (var i = 0; i < e.slots.length; i++) {
-	  			for (var j = 0; j < this.state.events.length; j++) {
-	  				if (tempdate.getFullYear() === this.state.events[j].start.getFullYear()
-	  					&& tempdate.getMonth() === this.state.events[j].start.getMonth()
-	  					&& tempdate.getDate() === this.state.events[j].start.getDate()) {
-	  					invalid = true;
-	  					break;
-	  				}
-	  			}
-
-	  			if (invalid) {
-	  				break;
-	  			} else {
-	  				tempdate.setDate(tempdate.getDate()+1);
-	  			}
-	  		}
-
-	  		if (invalid) {
-	  			this.setState({selectionError: true, addModal: false});
-	  		} else {
-	  			this.setState({selectionError: false, addEventsDates: e.slots, addModal: true});
-	  		}
-	  	} else {
-	  		this.setState({addModal: false});
-	  	}
+  	toggleDropdown() {
+  		this.setState({dropdownOpen: !this.state.dropdownOpen});
   	}
 
   	handleDayType(e) {
@@ -610,27 +649,27 @@ class Dashboard extends React.Component {
 
   		var style = {};
 
-  		if (e.title === "office") {
+  		if (e.title === "Office") {
 	  		style = {
-	  			backgroundColor: 'rgba(255,255,0,0.6)',
+	  			backgroundColor: 'rgba(51,153,255,0.6)',
 	  			color: 'black'
 	  		};
-	  	} else if (e.title.indexOf("remote") >= 0) {
+	  	} else if (e.title.indexOf("Remote") >= 0) {
 	  		style = {
-	  			backgroundColor: 'rgba(0,0,255,0.6)',
+	  			backgroundColor: 'rgba(51,0,204,0.6)',
 	  			color: 'black'
 	  		};
-	  	} else if (e.title === "vacation") {
+	  	} else if (e.title === "Vacation") {
 	  		style = {
-	  			backgroundColor: 'rgba(0,255,0,0.6)',
+	  			backgroundColor: 'rgba(255,204,0,0.6)',
 	  			color: 'black'
 	  		};
-	  	} else if (e.title === "holiday") {
+	  	} else if (e.title === "Holiday") {
 	  		style = {
-	  			backgroundColor: 'rgba(255,165,0,0.6)',
+	  			backgroundColor: 'rgba(255,51,204,0.6)',
 	  			color: 'black'
 	  		};
-	  	} else if (e.title === "sick") {
+	  	} else if (e.title === "Sick") {
 	  		style = {
 	  			backgroundColor: 'rgba(255,0,0,0.6)',
 	  			color: 'black'
@@ -640,130 +679,249 @@ class Dashboard extends React.Component {
   			style: style
   		};
   	}
+
+  	calNavigate(newDates) {
+
+  		var dayType = this.state.dayType;
+  		var location = this.state.locationValue;
+  		var notes = "";
+  		var isRemote = this.state.isRemote;
+  		var hasEvent = false;
+
+  		if (newDates.hasOwnProperty("slots")) {
+  			newDates = newDates.slots;
+  		} else if (newDates.hasOwnProperty("start")) {
+  			hasEvent = true;
+  			if (newDates.title.indexOf("Remote") >= 0) {
+				dayType = "remote";
+				location = newDates.title.substring(8);
+				isRemote = true;
+				if (newDates.notes) {
+					notes = newDates.notes;
+				}
+			} else {
+				dayType = newDates.title.toLowerCase();
+				location = "";
+				isRemote = false;
+				if (newDates.notes) {
+					notes = newDates.notes;
+				}
+			}
+			newDates = [new Date(newDates.start.getFullYear(), newDates.start.getMonth(), newDates.start.getDate())];
+  		} else {
+  			newDates = [newDates];
+  		}
+
+  		for (var i = 0; i < this.state.events.length; i++) {
+  			if (!hasEvent){
+  				for (var j = 0; j < newDates.length; j++) {
+		  			if (this.state.events[i].start.getFullYear() === newDates[j].getFullYear()
+		  				&& this.state.events[i].start.getMonth() === newDates[j].getMonth()
+		  				&& this.state.events[i].start.getDate() === newDates[j].getDate()) {
+
+		  				hasEvent = true;
+
+		  				if (this.state.events[i].title.indexOf("Remote") >= 0) {
+		  					dayType = "remote";
+		  					location = this.state.events[i].title.substring(8);
+		  					isRemote = true;
+		  					notes = this.state.events[i].notes
+		  				} else {
+		  					dayType = this.state.events[i].title.toLowerCase();
+		  					location = "";
+		  					isRemote = false;
+		  					notes = this.state.events[i].notes
+		  				}
+		  			}
+		  		}
+  			}
+  		}
+
+  		this.setState({dates: newDates,
+  						dayType: dayType,
+  						locationValue: location,
+  						notes: notes,
+  						isRemote: isRemote,
+  						hasEvent: hasEvent});
+
+  		if (newDates[0].getFullYear() > this.state.year) {
+  			this.next({year: newDates[0].getFullYear()});
+  		} else if (newDates[0].getFullYear() < this.state.year) {
+  			this.previous({year: newDates[0].getFullYear()});
+  		}
+
+  	}
 	
 	render() {
 		return (
-			<Container>
+			<Container fluid={true}>
 				<Row>
-					<Col sm={{size: 5, offset: 5}}>
-						<h1>Dashboard</h1>
-					</Col>
 					<Col>
-						<Button color="danger" onClick={this.logout} className="float-right">Logout</Button>
+						<Navbar color="dark" dark expand="md">
+							<NavbarBrand href="/dashboard">WorkLog</NavbarBrand>
+							<Nav className="ml-auto" navbar>
+								<ButtonDropdown nav inNavbar isOpen={this.state.dropdownOpen} toggle={this.toggleDropdown} >
+									<DropdownToggle nav caret>{sessionStorage.getItem("user")}</DropdownToggle>
+									<DropdownMenu right>
+										<NavLink to="/settings"><DropdownItem>Settings</DropdownItem></NavLink>
+										<DropdownItem divider />
+										<DropdownItem onClick={this.logout}>Logout</DropdownItem>
+									</DropdownMenu>
+								</ButtonDropdown>
+							</Nav>
+						</Navbar>
 					</Col>
 				</Row>
 				<Row>
-					<Col lg={{size: 12}}>
-						<Nav tabs>
-							<NavItem>
-								<NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggleTab('1'); }} >Calendar</NavLink>
-							</NavItem>
-							<NavItem>
-								<NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggleTab('2'); }} >Data</NavLink>
-							</NavItem>
-						</Nav>
-						<TabContent activeTab={this.state.activeTab}>
-      						<TabPane tabId="1">
-      							<Card>
-									<CardBody id="test">
+					<Col lg={6}>
+						<Card>
+							<CardTitle style={{padding: 10}}>
+							<Button color="info" onClick={this.nextDays} className="float-right" >&raquo;</Button>
+										<Button color="info" onClick={this.previousDays} className="float-left" >&laquo;</Button>
+										<div className="text-center" style={{fontSize: '200%'}}><b>{this.state.dates.length > 1 ? this.state.dates[0].toDateString().substring(0,10) + ' - ' + this.state.dates[this.state.dates.length-1].toDateString().substring(0,10) : this.state.dates[0].toDateString().substring(0,10)}</b></div>
+							</CardTitle>
+							<CardBody id="test">
+								<Row style={{marginBottom: 25}}>
+									<Col>
+										
+										<Form method="post" onSubmit={this.handleUpdate}>
+											<FormGroup row>
+												<Label for="type" sm={2}>Type:</Label><br/>
+												<select style={{width: "125px"}} id="type" value={this.state.dayType} onChange={this.handleDayType}>
+													<option value="office">Office</option>
+													<option value="remote">Remote</option>
+													<option value="vacation">Vacation</option>
+													<option value="holiday">Holiday</option>
+													<option value="sick">Sick</option>
+												</select>
+											</FormGroup>
+											<FormGroup row>
+												<Label for="location" sm={2}>Location:</Label>
+												<Col sm={5}><Input id="location" type="text" disabled={!this.state.isRemote} value={this.state.locationValue} onChange={e => this.setState({locationValue: e.target.value})} /></Col>
+											</FormGroup>
+											<FormGroup row>
+												<Label for="notes" sm={2}>Notes:</Label>
+												<Col sm={5}><Input id="notes" type="text" value={this.state.notes} onChange={e => this.setState({notes: e.target.value})} /></Col>
+											</FormGroup>
+									        <Button outline type="submit" color="primary" className="float-right" >Update</Button>
+									        <Button outline disabled={!this.state.hasEvent} color="danger" onClick={this.deleteEvent} className="float-right" style={{marginRight:10}} >Delete</Button>
+										</Form>
+									</Col>
+								</Row>
+								<Row>
+									<Col>
 										<Alert color="danger" isOpen={this.state.selectionError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
 										<Alert color="danger" isOpen={this.state.addError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
 										<Alert color="danger" isOpen={this.state.updateError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
 										<Alert color="danger" isOpen={this.state.deleteError} toggle={this.onDismiss}>Invalid selection of Dates: Worklog Event already exists</Alert>
 										<BigCalendar
+											date={this.state.dates[0]}
+											onNavigate={(this.calNavigate)}
 								        	selectable="ignoreEvents"
 								          	localizer={localizer}
 								          	events={this.state.events}
 								          	defaultView={BigCalendar.Views.MONTH}
 								          	views={["month"]}
-								          	style={{ height: "100vh" }}
-								          	onSelectEvent={(this.toggleEventModal)}
-								          	onSelectSlot={(this.toggleAddModal)}
+								          	style={{ height: "50vh" }}
+								          	onSelectEvent={(this.calNavigate)}
+								          	onSelectSlot={(this.calNavigate)}
 								          	eventPropGetter={(this.eventSetColor)}
 										/>
-									</CardBody>
-								</Card>
-								<Modal isOpen={this.state.eventModal} toggle={this.toggleEventModal}>
-									<ModalHeader>Modify Worklog Event: {this.state.modifyEventDate}</ModalHeader>
-									<ModalBody>
-										<Form method="post" onSubmit={this.updateEvent}>
-											<FormGroup>
-												<select value={this.state.dayType} onChange={this.handleDayType}>
-													<option value="office">Office</option>
-													<option value="remote">Remote</option>
-													<option value="vacation">Vacation</option>
-													<option value="holiday">Holiday</option>
-													<option value="Sick">Sick</option>
-												</select>
-											</FormGroup>
-											{this.state.isRemote ?(<FormGroup>
-												<Label>Location:</Label>
-												<Input type="text" value={this.state.locationValue} onChange={e => this.setState({LocationValue: e.target.value})} />
-											</FormGroup>) : ''}
-									        <Button type="submit" color="primary" className="float-right">Update</Button>
-									        <Button color="warning" onClick={e => this.setState({eventModal: false})} className="float-left">Cancel</Button>
-									        <Button color="danger" onClick={this.deleteEvent} className="float-left">Delete</Button>
-										</Form>
-									</ModalBody>
-								</Modal>
-								<Modal isOpen={this.state.addModal} toggle={this.toggleAddModal}>
-									<ModalHeader>Add Worklog Event: {this.state.addEventsDates[0].toDateString()} - {this.state.addEventsDates[this.state.addEventsDates.length-1].toDateString()}</ModalHeader>
-									<ModalBody>
-										<Form method="post" onSubmit={this.addDays}>
-											<FormGroup>
-												<select value={this.state.dayType} onChange={this.handleDayType}>
-													<option value="office">Office</option>
-													<option value="remote">Remote</option>
-													<option value="vacation">Vacation</option>
-													<option value="holiday">Holiday</option>
-													<option value="Sick">Sick</option>
-												</select>
-											</FormGroup>
-											{this.state.isRemote ?(<FormGroup>
-												<Label>Location:</Label>
-												<Input type="text" value={this.state.locationValue} onChange={e => this.setState({locationValue: e.target.value})} />
-											</FormGroup>) : ''}
-									        <Button type="submit" color="primary" className="float-right">Add</Button>
-									        <Button color="warning" onClick={e => this.setState({addModal: false})} className="float-left">Cancel</Button>
-										</Form>
-									</ModalBody>
-								</Modal>
-							</TabPane>
-							<TabPane tabId="2" active={this.state.data !== undefined ? "true" : "false"} >
-								{this.state.data !== undefined ?
-									(<Card>
-										<CardHeader>
-											<Button color="info" disabled={this.state.currentIndex === 0} onClick={this.previous} className="float-left" >&laquo; Previous Year</Button>
-											<Button color="info" disabled={this.state.currentIndex === this.state.data.length-1} onClick={this.next} className="float-right" >Next Year &raquo;</Button>
-										</CardHeader>
-										<CardTitle className="text-center">{this.state.startdate.toDateString()} - {this.state.lastdate.toDateString()}</CardTitle>
-										<CardBody>
-											{this.state.hasRemote ? 
-												(<Row>
-													<Col sm={{size: 6}}>
-														<Doughnut data={this.state.charData} />
-													</Col>
-													<Col sm={{size: 6}}>
-														<Doughnut data={this.state.remoteCharData} />
-													</Col>
-												</Row>) : 
-												(<Row>
-													<Col sm={{size: 6, offset: 3}}>
-														<Doughnut data={this.state.charData} />
-													</Col>
-												</Row>)
-											}
-											<Row>
-												<Col>
-													<Button color="primary" onClick={this.exportData} className="float-right" >Export All Data</Button>
-												</Col>
-											</Row>
-										</CardBody>
-									</Card>) :
-									(<h4>No data to display</h4>)
+									</Col>
+								</Row>
+							</CardBody>
+						</Card>
+					</Col>
+					<Col lg={6}>
+						<Card>
+							<CardTitle style={{padding: 10}} className="text-center">
+								<Button color="info" onClick={this.previous} className="float-left" >&laquo;</Button>
+								<Button color="info" onClick={this.next} className="float-right" >&raquo;</Button>
+								<div style={{fontSize: '200%'}}><b>{this.state.year}</b></div>
+							</CardTitle>
+							<CardBody>
+								{this.state.remoteTotal > 0 ? 
+								(<Row>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.remoteTotal - this.state.charData.datasets[0].data[1] < 0 ? 0 : this.state.remoteTotal - this.state.charData.datasets[0].data[1]}</b> Remote days remaining</div>
+									</Col>
+								</Row>)
+								: ''}
+								{this.state.vacationTotal > 0 ? 
+								(<Row>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.vacationTotal - this.state.charData.datasets[0].data[2] < 0 ? 0 : this.state.vacationTotal - this.state.charData.datasets[0].data[2]}</b> Vacation days remaining</div>
+									</Col>
+								</Row>)
+								: ''}
+								{this.state.holidayTotal > 0 ? 
+								(<Row>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.holidayTotal - this.state.charData.datasets[0].data[3] < 0 ? 0 : this.state.holidayTotal - this.state.charData.datasets[0].data[3]}</b> Holiday days remaining</div>
+									</Col>
+								</Row>)
+								: ''}
+								{this.state.sickTotal > 0 ? 
+								(<Row>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.sickTotal - this.state.charData.datasets[0].data[4] < 0 ? 0 : this.state.sickTotal - this.state.charData.datasets[0].data[4]}</b> Sick days remaining</div>
+									</Col>
+								</Row>)
+								: ''}
+								<Row>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.charData.datasets[0].data[0]}</b></div>
+										<div>
+											Office Days Worked
+										</div>
+									</Col>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.charData.datasets[0].data[1]}</b></div>
+										<div>
+											Remote Days Worked
+										</div>
+									</Col>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.charData.datasets[0].data[2]}</b></div>
+										<div>
+											Vacation Days
+										</div>
+									</Col>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.charData.datasets[0].data[3]}</b></div>
+										<div>
+											Holidays
+										</div>
+									</Col>
+									<Col>
+										<div style={{fontSize: '200%'}}><b>{this.state.charData.datasets[0].data[4]}</b></div>
+										<div>
+											Sick Days
+										</div>
+									</Col>
+								</Row>
+								{this.state.hasRemote ? 
+									(<Row>
+										<Col lg={{size: 6}}>
+											<Doughnut data={this.state.charData} />
+										</Col>
+										<Col lg={{size: 6}}>
+											<Doughnut data={this.state.remoteCharData} />
+										</Col>
+									</Row>) : 
+									(<Row>
+										<Col lg={{size: 6}}>
+											<Doughnut data={this.state.charData} />
+										</Col>
+									</Row>)
 								}
-							</TabPane>
-						</TabContent>
+								<Row>
+									<Col>
+										<Button color="primary" onClick={this.exportData} className="float-right" >Export All Data</Button>
+									</Col>
+								</Row>
+							</CardBody>
+						</Card>
 					</Col>
 				</Row>
 			</Container>

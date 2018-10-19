@@ -28,7 +28,14 @@ def updateUserCredentials(user,updatedData):
                                                upsert=True)
     
 def createUserInDatabase(user,password):
-    userId = mongoLog.db.log.insert_one({"years": []}).inserted_id
+    userId = mongoLog.db.log.insert_one({"settings": {
+                                            "slack": "",
+                                            "total": {
+                                                "remote": -1,
+                                                "vacation": -1,
+                                                "holiday": -1,
+                                                "sick": -1}},
+                                         "years": []}).inserted_id
     mongoCredentials.db.credentials.insert_one({"user_id": userId,
                                                 "username": user,
                                                 "password": encrypt(encKey, password),
@@ -41,6 +48,30 @@ def decryptPassword(password):
 
 def encryptPassword(password):
     return encrypt(encKey, password)
+
+def getUserSettings(user):
+    userCred = getUserCredentials(user)
+    
+    log = mongoLog.db.log.find_one({"_id": userCred["user_id"]})
+    
+    if log:
+        return log["settings"]
+    return None
+
+def updateUserSettings(user, updatedSettings):
+    userCred = getUserCredentials(user)
+    
+    settings = getUserSettings(user)
+    
+    for setting in updatedSettings.keys():
+        if setting.lower() == "slack":
+            settings["slack"] = updatedSettings[setting]
+        elif setting.lower() in ["remote", "vacation", "holiday", "sick"]:
+            settings["total"][setting.lower()] = updatedSettings[setting]
+    
+    mongoLog.db.log.update_one({"_id": userCred["user_id"]},
+                                {"$set": {"settings": settings}},
+                                upsert=True)
 
 def getUserWorklog(user):
     userCred = getUserCredentials(user)
@@ -76,11 +107,12 @@ def getUserDateData(user,date):
         
     return None
 
-def updateUserWorkLog(user,date,dayType,location):
+def updateUserWorkLog(user,date,dayType,location,notes):
     userCred = getUserCredentials(user)
                     
     entry = {"date": date.isoformat(),
-             "type": dayType}
+             "type": dayType,
+             "notes": notes}
         
     if dayType == "remote":
         entry["location"] = location        
@@ -89,13 +121,14 @@ def updateUserWorkLog(user,date,dayType,location):
                                 {"$set": {"years.$.entries.$[entry]": entry}},
                                 array_filters=[{"entry.date": date.isoformat()}])
     
-def addUserWorkLogData(user,date,dayType,location):
+def addUserWorkLogData(user,date,dayType,location,notes):
     userCred = mongoCredentials.db.credentials.find_one({"username": user})
     
     hasYearData = getUserYearData(user, date.year)
     
     entry = {"date": date.isoformat(),
-             "type": dayType}
+             "type": dayType,
+             "notes": notes}
         
     if dayType == "remote":
         entry["location"] = location

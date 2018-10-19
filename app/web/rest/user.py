@@ -9,6 +9,8 @@ User restful end points handling
 from flask import Blueprint, request, jsonify
 import datetime
 import sys
+import urllib.request, urllib.parse
+import json
 from app.web import utils
 from app.services.user import create_user_service, reset_password_service
 from app.services.worklog import get_worklog_data_service, modify_worklog_data_service
@@ -46,6 +48,11 @@ def handleUserData(user=""):
     deleteAll = request.args.get('deleteall',False,type=bool)
     deleteYear = request.args.get('deleteyear',False,type=bool)
     
+    data = request.get_json()
+    notes = ""
+    if data and "notes" in data:
+        notes = data["notes"]
+    
     if 'year' in request.args and not year:
         return jsonify({"error": "Invalid year given"}), 400
     
@@ -69,14 +76,49 @@ def handleUserData(user=""):
         location = location.title()
     
     if request.method == "GET":
-        return get_worklog_data_service.getWorklogData(user, year, date) 
+        return get_worklog_data_service.getWorklogData(user, year, date)
         
     elif request.method == "POST":
-        return modify_worklog_data_service.addWorklogData(user, date, dayType, location)
+        response = modify_worklog_data_service.addWorklogData(user, date, dayType, location, notes)
+        
+        if type(response) != tuple and response.status_code == 200:
+            settings = json.loads(get_worklog_data_service.getWorklogSettings(user).data)["settings"]
+            if settings["slack"].strip():
+                try:
+                    data = {"payload": {"text": user + " added " + dayType + " for " + date.isoformat()}}
+                    data = bytes( urllib.parse.urlencode( data ).encode() )
+            
+                    urllib.request.urlopen(settings["slack"].strip(), data=data)
+                except:
+                    pass
+                
+        return response
     
     elif request.method == "PUT":
-        return modify_worklog_data_service.updateWorklogData(user, date, dayType, location)
+        response = modify_worklog_data_service.updateWorklogData(user, date, dayType, location, notes)
+    
+        if type(response) != tuple and response.status_code == 200:
+            settings = json.loads(get_worklog_data_service.getWorklogSettings(user).data)["settings"]
+            if settings["slack"].strip():
+                try:
+                    data = {"payload": {"text": user + " changed " + date.isoformat() + " to " + dayType}}
+                    data = bytes( urllib.parse.urlencode( data ).encode() )
+            
+                    urllib.request.urlopen(settings["slack"].strip(), data=data)
+                except:
+                    pass
+                
+        return response
     
     elif request.method == "DELETE":
         return modify_worklog_data_service.deleteWorklogData(user, date, year, deleteUser, deleteAll, deleteYear)
+
+@user_v1_blueprint.route('/user/<user>/settings', methods=['GET','PUT'])
+@utils.logged_in
+def handleUserSettings(user=""):  
+    data = request.get_json()
     
+    if request.method == "GET":
+        return get_worklog_data_service.getWorklogSettings(user)
+    elif request.method == "PUT":
+        return modify_worklog_data_service.updateWorklogSettings(user, data)

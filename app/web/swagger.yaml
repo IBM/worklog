@@ -89,6 +89,46 @@ paths:
           description: "Successfully reset user's password"
         403:
           description: "Did not reset user's password"
+  /user/{username}/settings:
+    get:
+      tags:
+      - "Users"
+      summary: "Gets a user's settings"
+      description: ""
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successfully updated user's settings"
+        403:
+          description: "Not logged in"
+        404:
+          description: "No settings found"
+    put:
+      tags:
+      - "Users"
+      summary: "Updates a user's settings"
+      description: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "data"
+        description: "Updated user settings. Requires at least one setting to be provided"
+        required: True
+        schema:
+          $ref: "#/definitions/Settings"
+      responses:
+        200:
+          description: "Successfully updated user's settings"
+        400:
+          description: "No settings specified"
+        403:
+          description: "Not logged in"
+        404:
+          description: "No settings found"
   /user/{username}:
     get:
       tags:
@@ -122,6 +162,8 @@ paths:
       summary: "Add work log data for a user"
       description: ""
       operationId: "handleUserData"
+      consumes:
+      - "application/json"
       produces:
       - "application/json"
       parameters:
@@ -150,6 +192,11 @@ paths:
         name: "location"
         description: "Location of remote work. Only required when type=remote"
         type: "string"
+      - in: "body"
+        name: "notes"
+        description: "Optional notes to add for an entry"
+        schema:
+          $ref: "#/definitions/Notes"
       responses:
         200:
           description: "Successfully added work log data"
@@ -162,6 +209,8 @@ paths:
       - "Users"
       summary: "Update work log data for a user"
       description: ""
+      consumes:
+      - "application/json"
       produces:
       - "application/json"
       parameters:
@@ -190,6 +239,11 @@ paths:
         name: "location"
         description: "Location of remote work. Only required when type=remote"
         type: "string"
+      - in: "body"
+        name: "notes"
+        description: "Optional notes to add for an entry"
+        schema:
+          $ref: "#/definitions/Notes"
       responses:
         200:
           description: "Successfully updated work log data"
@@ -258,3 +312,21 @@ definitions:
         type: "string"
       new_password:
         type: "string"
+  Notes:
+    type: "object"
+    properties:
+      notes:
+        type: "string"
+  Settings:
+    type: "object"
+    properties:
+      slack:
+        type: "string"
+      remote:
+        type: "integer"
+      vacation:
+        type: "integer"
+      holiday:
+        type: "integer"
+      sick:
+        type: "integer"

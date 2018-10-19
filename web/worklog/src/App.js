@@ -7,6 +7,7 @@ import Login from "./components/Login";
 import Create from "./components/Create";
 import Reset from "./components/Reset";
 import Dashboard from "./components/Dashboard";
+import Settings from "./components/Settings";
 import Error from "./components/Error";
 
 const API_BASE_URL = process.env.REACT_APP_APP_SERVER;
@@ -28,6 +29,7 @@ class App extends React.Component {
     this.create = this.create.bind(this);
     this.reset = this.reset.bind(this);
     this.redirectToLogin = this.redirectToLogin.bind(this);
+    this.redirectToDashboard = this.redirectToDashboard.bind(this);
     this.updateLoading = this.updateLoading.bind(this);
     this.createError = this.createError.bind(this);
 
@@ -54,6 +56,10 @@ class App extends React.Component {
     sessionStorage.setItem("session",false);
     sessionStorage.setItem("user","");
     this.history.push("/login");
+  }
+
+  redirectToDashboard = (e) => {
+    this.history.push("/dashboard");
   }
 
   createError = () => {
@@ -159,6 +165,7 @@ class App extends React.Component {
             <Route path="/reset" render={(props) => <Reset {...props} reset={this.reset} state={this.state} redirectToLogin={this.redirectToLogin} />} />
             <Route path="/create" render={(props) => <Create {...props} create={this.create} createError={this.createError} state={this.state} />} />
             <Route path="/dashboard" render={(props) => <Dashboard {...props} state={this.state} redirectToLogin={this.redirectToLogin} />} />
+            <Route path="/settings" render={(props) => <Settings {...props} state={this.state} redirectToLogin={this.redirectToLogin} redirectToDashboard={this.redirectToDashboard} />} />
             <Route component={Error} />
           </Switch>
         </Router>

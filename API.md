@@ -16,6 +16,9 @@
 	* [Add Entry](#add-entry)
 	* [Update Entry](#update-entry)
 	* [Delete Entry](#delete-entry)
+* [Settings](#settings)
+	* [View Settings](#view-settings)
+	* [Update Settings](#update-settings)
 
 
 # Users
@@ -113,6 +116,15 @@ Each user has a document in the database that stores all of their associated wor
 ```
 {
 	"_id": ObjectId,
+	"settings": {
+					"slack": String,
+					"total": {
+								"remote": Integer,
+								"vacation": Integer,
+								"holiday": Integer,
+								"sick": Integer
+							}
+				}
 	"years":	[
 					{
 						"year": Integer,
@@ -120,7 +132,8 @@ Each user has a document in the database that stores all of their associated wor
 								{
 									"date": String,
 									"type": String,
-									"location": String
+									"location": String,
+									"notes": String
 								}
 							]
 					}
@@ -129,6 +142,7 @@ Each user has a document in the database that stores all of their associated wor
 ```
 
 Visit [Entry](#entry) to see more information about the entry structure.
+Visit [Settings](#settings) to see more information about the settings structure.
 
 ## View All Work Log Data
 
@@ -176,7 +190,8 @@ Each year is a document in a years list located in each user's unique document i
 					{
 						"date": String,
 						"type": String,
-						"location": String
+						"location": String,
+						"notes": String
 					}
 				]
 }
@@ -236,18 +251,23 @@ An entry refers to worklog data associated with a specific day.
 {
 	"date": String,
 	"type": String,
-	"location": String
+	"location": String,
+	"notes": String
 }
 ```
 
 Date must follow the format "YYYY-MM-DD"
+
 Type must be one of the following:
 	* office
 	* remote
 	* vacation
 	* holiday
 	* sick
+
 Location is only required when the Type is `remote`
+
+Notes are optional notes that can be included with the entry
 
 ## View Entry
 
@@ -276,7 +296,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -X POST
+curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -H "Content-Type: application/json" -X POST -d '{"notes": "<notes>"}'
 ```
 
 User = Username for user.
@@ -286,6 +306,8 @@ Date = Date to add.
 Type = Type to add.
 
 Location = Location to add. Only required if Type is `remote`
+
+Notes = Optional notes to add. If not included, `content-type` header and `data` are not required.
 
 __Response__
 
@@ -310,7 +332,7 @@ Not Logged In: When the user specified is not a valid username or the valid user
 __Command__
 
 ```
-curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -X PUT
+curl http://localhost:5000/api/v1/user/<user>?date=<date>&type=<type>&location=<location> -H "Content-Type: application/json" -X PUT -d '{"notes": "<notes>"}'
 ```
 
 User = Username for user.
@@ -320,6 +342,8 @@ Date = Date to update.
 Type = Type to update.
 
 Location = Location to update. Only required if Type is `remote`
+
+Notes = Optional notes to update. If not included, `content-type` header and `data` are not required.
 
 __Response__
 
@@ -358,5 +382,73 @@ Success: The response is a 200 status code. The response body is a JSON object c
 Invalid Date: When the date specified is not a valid date with the required format, the response is a 400 status code. The response body is a JSON object containing an error message.
 
 No Date Data Deleted: When there is no date query parameter specified or no data for the date specified, the response is a 404 status code. The response body is a JSON object containing an error.
+
+Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
+
+# Settings
+
+Settings refer to the settings for a user in association with their worklog data.
+
+```
+{
+	"slack": String,
+	"total": {
+				"remote": Integer,
+				"vacation": Integer,
+				"holiday": Integer,
+				"sick": Integer
+			}
+}
+```
+
+Slack is the URL for a slack webhook. If a valid URL is provided, when a user adds or modifies an entry, a message is sent to the Slack app associated with the webhook.
+
+The total for remote, vacation, holiday, and sick refer to the total number of days that can be used in a year.
+
+## View Settings
+
+__Command__
+
+```
+curl http://localhost:5000/api/v1/user/<user>/settings
+```
+
+User = Username for user.
+
+__Response__
+
+Success: The response is a 200 status code. The response body is a JSON object containing the settings information for a user.
+
+No Settings Found: When there is no data in the database for the user specified, the response is a 404 status code. The response body is a JSON object containing an error.
+
+Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.
+
+## Update Settings
+
+__Command__
+
+```
+curl http://localhost:5000/api/v1/user/<user>/settings -H "Content-Type: application/json" -X PUT -d '{"slack": <slack>, "remote": <remote>, "vacation": <vacation>, "holiday": <holiday>, "sick": <sick>}'
+```
+
+User = Username for user.
+
+Slack = Slack webhook URL.
+
+Remote = Remote total that can be used in a year.
+
+Vacation = Vacation total that can be used in a year.
+
+Holiday = Holiday total that can be used in a year.
+
+Sick = Sick total that can be used in a year.
+
+__Response__
+
+Success: The response is a 200 status code. The response body is a JSON object containing the updated settings information for a user.
+
+No Settings Specified: When there are no settings specified in the data of the request, the response is a 400 status code. The response body is a JSON object containing an error.
+
+No Settings Found: When there is no data in the database for the user specified, the response is a 404 status code. The response body is a JSON object containing an error.
 
 Not Logged In: When the user specified is not a valid username or the valid user is not currently logged in, the response is a 403 status code. The response body is a JSON object containing an error message.

@@ -215,7 +215,9 @@ class TestScenarios(unittest.TestCase):
         '''Create Entry'''
         
         '''Create Office Entry'''
-        response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-01&type=office')
+        response = self.app.post('http://localhost:5000/api/v1/user/test?date=2018-01-01&type=office',
+                                data=json.dumps({"notes": "These are notes"}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         
         '''Create Remote Entry'''
@@ -265,7 +267,9 @@ class TestScenarios(unittest.TestCase):
         '''Update Entry'''
         
         '''Successful Update Entry'''
-        response = self.app.put('http://localhost:5000/api/v1/user/test?date=2018-01-02&type=office')
+        response = self.app.put('http://localhost:5000/api/v1/user/test?date=2018-01-02&type=office',
+                                data=json.dumps({"notes": "These are new notes"}),
+                                content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['type'],"office")
         
@@ -336,6 +340,42 @@ class TestScenarios(unittest.TestCase):
         
         '''Not Logged In'''
         response = self.app.delete('http://localhost:5000/api/v1/user/test2?date=2018-01-01')
+        self.assertEqual(response.status_code, 403)
+        
+    def test_settings(self):
+        
+        print("Test Settings")
+        
+        '''Create New User'''
+        self.app.put('http://localhost:5000/api/v1/user/create',
+                     data=json.dumps({"username": "test", "password": "abc"}),
+                     content_type='application/json')
+        
+        '''Update Settings'''
+        
+        '''Successful Update Settings'''
+        response = self.app.put('http://localhost:5000/api/v1/user/test/settings',
+                     data=json.dumps({"vacation": 10}),
+                     content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()['settings']['total']["vacation"],10)
+        
+        '''No Settings Data Specified'''
+        response = self.app.put('http://localhost:5000/api/v1/user/test/settings')
+        self.assertEqual(response.status_code, 400)
+        
+        '''Not Logged In'''
+        response = self.app.put('http://localhost:5000/api/v1/user/test2/settings')
+        self.assertEqual(response.status_code, 403)
+        
+        '''View Settings'''
+        
+        '''Successful View Settings'''
+        response = self.app.get('http://localhost:5000/api/v1/user/test/settings')
+        self.assertEqual(response.status_code, 200)
+        
+        '''Not Logged In'''
+        response = self.app.get('http://localhost:5000/api/v1/user/test2/settings')
         self.assertEqual(response.status_code, 403)
 
 if __name__ == "__main__":

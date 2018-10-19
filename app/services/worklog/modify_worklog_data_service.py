@@ -10,7 +10,7 @@ from app.services import utils
 from flask import jsonify
 from app.services.worklog import get_worklog_data_service
 
-def addWorklogData(user, date, dayType, location):
+def addWorklogData(user, date, dayType, location, notes):
     if not date:
         return jsonify({"error": "No date given"}), 400
     
@@ -26,11 +26,11 @@ def addWorklogData(user, date, dayType, location):
     if hasDateData:
         return jsonify({"error": "Data already exists for date given"}), 400
         
-    utils.addUserWorkLogData(user, date, dayType, location)
+    utils.addUserWorkLogData(user, date, dayType, location, notes)
     
     return get_worklog_data_service.getWorklogData(user, None, date)
 
-def updateWorklogData(user, date, dayType, location):
+def updateWorklogData(user, date, dayType, location, notes):
     if not date:
         return jsonify({"error": "No date given"}), 400
     
@@ -45,7 +45,7 @@ def updateWorklogData(user, date, dayType, location):
     
     if userDateData:
                 
-        utils.updateUserWorkLog(user, date, dayType, location)
+        utils.updateUserWorkLog(user, date, dayType, location, notes)
                 
         return get_worklog_data_service.getWorklogData(user, None, date)
             
@@ -95,3 +95,17 @@ def deleteWorklogData(user, date, year, deleteUser, deleteAll, deleteYear):
                     return jsonify({"success":"Successfully deleted date data"})
                 
         return jsonify({"error":"No date data removed"}), 404
+    
+def updateWorklogSettings(user, updatedSettings):
+    
+    if not updatedSettings:
+        return jsonify({"error": "No settings given"}), 400
+    
+    userData = utils.getUserWorklog(user)
+    
+    if userData != None:
+        utils.updateUserSettings(user, updatedSettings)
+        
+        return get_worklog_data_service.getWorklogSettings(user)
+    
+    return jsonify({"error": "No user found to update settings"}), 404

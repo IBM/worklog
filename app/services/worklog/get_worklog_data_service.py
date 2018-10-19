@@ -32,3 +32,12 @@ def getWorklogData(user,year,date):
             return jsonify({"years": userData})
         else:
             return jsonify({"error": "No data found"}), 404
+        
+def getWorklogSettings(user):
+    
+    userSettings = utils.getUserSettings(user)
+    
+    if userSettings:
+        return jsonify({"settings": userSettings})
+    else:
+        return jsonify({"error": "No settings found"}), 404

@@ -21,7 +21,7 @@ class Login extends React.Component {
 		return (
 			<Container>
 				<Row>
-					<Col sm={{size: 6, offset: 3}}>
+					<Col sm={{size: 6, offset: 5}}>
 						<h1>Login</h1>
 					</Col>
 				</Row>
@@ -40,7 +40,7 @@ class Login extends React.Component {
 										<FormFeedback>Invalid credentials</FormFeedback>
 									</FormGroup>
 									<Button type="submit" color="primary" className="float-right">Login</Button>
-									<NavLink to="/" ><Button color="danger" className="float-left">Cancel</Button></NavLink>
+									<NavLink to="/" ><Button color="danger">Cancel</Button></NavLink>{' '}
 									<NavLink to="/reset" ><Button color="secondary">Reset Password</Button></NavLink>
 								</Form>
 							</CardBody>
