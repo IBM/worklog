@@ -173,8 +173,7 @@ class Dashboard extends React.Component {
 
 			    for (i = 0; i < data[currentIndex].entries.length; i++) {
 			    	if (i === 0) {
-			    		tempdate = new Date(data[currentIndex].entries[i].date);
-			    		year = tempdate.getFullYear();
+			    		year = Number.parseInt(data[currentIndex].entries[i].date.substring(0,4),10);
 			    	}
 
 		   			if (data[currentIndex].entries[i].hasOwnProperty("location")) {
