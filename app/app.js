@@ -1,7 +1,10 @@
 
 const express = require('express')
 const app = express()
+const cors = require('cors')
 require('dotenv').config();
+
+app.use(cors());
 
 /**
  * routesフォルダにapiのファイルを作成したらここで読み込みを行う
